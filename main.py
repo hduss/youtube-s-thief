@@ -3,6 +3,7 @@ import os
 import pickle
 import json
 import time
+import title
 
 import google.oauth2.credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -55,6 +56,7 @@ def get_videos(build):
 
 
 def main():
+    title.print_title()
     
     build = get_credentials()  # get credentials
     response = get_videos(build)  # get videos
