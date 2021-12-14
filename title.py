@@ -4,21 +4,31 @@ colorama.init()
 
 
 def start_program():
-    print('Une page Contient 50 vidéos')
-    nbr_pages = input("Combien de pages souhaitez-vous télécharger ? ")
+    print_title()
+    print(colorama.Fore.MAGENTA + colorama.Style.DIM + 'Version 0.0.1.5')
+    print('Welcome to youtube\'s thief')
+    print('Youtube\'s thief allows you to download part or all of your liked video on your youtube channel')
+    print('A page contain 50 videos')
+    print()
+    nbr_pages = input(colorama.Back.GREEN + "How many pages do you want to download ? (enter 'ALL' for entire playlist) " + colorama.Style.RESET_ALL)
     return int(nbr_pages)
 
 
 def print_title():
-    print(colorama.Fore.RED + colorama.Style.NORMAL)
-    print("                         __          __         _          __   __     _        ____")
-    print("   __  __ ____   __  __ / /_ __  __ / /_   ___ ( )_____   / /_ / /_   (_)___   / __/")
-    print("  / / / // __ \ / / / // __// / / // __ \ / _ \|// ___/  / __// __ \ / // _ \ / /_  ")
-    print(" / /_/ // /_/ // /_/ // /_ / /_/ // /_/ //  __/ (__  )  / /_ / / / // //  __// __/  ")
-    print(" \__, / \____/ \__,_/ \__/ \__,_//_.___/ \___/ /____/   \__//_/ /_//_/ \___//_/     ")
-    print("/____/ ")
 
+    LOGO =r'''
+                             __          __         _          __   __     _        ____
+       __  __ ____   __  __ / /_ __  __ / /_   ___ ( )_____   / /_ / /_   (_)___   / __/
+      / / / // __ \ / / / // __// / / // __ \ / _ \|// ___/  / __// __ \ / // _ \ / /_  
+     / /_/ // /_/ // /_/ // /_ / /_/ // /_/ //  __/ (__  )  / /_ / / / // //  __// __/  
+     \__, / \____/ \__,_/ \__/ \__,_//_.___/ \___/ /____/   \__//_/ /_//_/ \___//_/     
+    /____/
+    '''
+    print(colorama.Fore.MAGENTA + colorama.Style.NORMAL)
+    print(LOGO)
     print(colorama.Style.RESET_ALL)
 
 
 
+def display_informations():
+    print()

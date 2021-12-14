@@ -5,6 +5,7 @@ import time
 import title
 import colorama
 import google.oauth2.credentials
+from tqdm import tqdm
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -65,17 +66,17 @@ def get_video_next_page(build, next_page_token):
 
 
 def main():
-
-    title.print_title()
+    title.display_informations()
     nbr_pages = title.start_program()
 
     if nbr_pages > 0:
+        for i in tqdm(range(50)):
+            time.sleep(0.01)
 
         build = authenticate_youtube()  # get credentials
         response = get_videos(build)  # get videos
         next_page_token = response['nextPageToken']
 
-        print(colorama.Fore.CYAN + colorama.Style.BRIGHT + colorama.Back.WHITE + '=== page 1' + colorama.Style.RESET_ALL)
         # print(json.dumps(response, indent=2))  # Print results
         for item in response['items']:
             time.sleep(0.03)
