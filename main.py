@@ -4,6 +4,7 @@ import pickle
 import time
 import title
 import colorama
+import csv
 import google.oauth2.credentials
 from tqdm import tqdm
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -65,42 +66,57 @@ def get_video_next_page(build, next_page_token):
     return resp
 
 
+def write_in_folder(file, liste):
+    with open(file, "w", encoding="utf-8") as f:
+        for song in tqdm(liste, desc="Writing song"):
+            f.write(song + "\n")
+
+
 def main():
     title.display_informations()
     nbr_pages = title.start_program()
+    song_list = []
 
     if nbr_pages > 0:
-        for i in tqdm(range(50)):
-            time.sleep(0.01)
 
         build = authenticate_youtube()  # get credentials
         response = get_videos(build)  # get videos
         next_page_token = response['nextPageToken']
 
+        print(colorama.Fore.GREEN + colorama.Style.NORMAL)
         # print(json.dumps(response, indent=2))  # Print results
-        for item in response['items']:
-            time.sleep(0.03)
+        for item in tqdm(response['items'], desc="Processing page 1"):
 
-            print(colorama.Fore.YELLOW + colorama.Style.NORMAL + "[+] " + item['snippet']['title'] + " - " + item[
-                'id'] + colorama.Style.RESET_ALL)
+            song = item['snippet']['title'] + " --- " + item['id']
+            song_list.append(song)
+
+            # print(song_liste)
+            # print(colorama.Fore.YELLOW + colorama.Style.NORMAL + "[+] " + item['snippet']['title'] + " --- " + item[
+            #     'id'] + colorama.Style.RESET_ALL)
 
         i = 1  # For DEBUG
+
         # While loop for next page | get_video_next_page() function
         while next_page_token and i < nbr_pages:
+
             r = get_video_next_page(build, next_page_token)
             next_page_token = r['nextPageToken']
-            print("Next Page Token while => " + next_page_token)
-            for item in r['items']:
-                time.sleep(0.03)
+            # print("Next Page Token while => " + next_page_token)
+            for item in tqdm(r['items'], desc="Processing page " + str(i + 1)):
 
-                print(colorama.Fore.YELLOW + colorama.Style.NORMAL + "[+] " + item['snippet']['title'] + " --- " + item[
-                    'id'] + colorama.Style.RESET_ALL)
+                song = item['snippet']['title'] + " --- " + item['id']
+                song_list.append(song)
+
+                # print(colorama.Fore.YELLOW + colorama.Style.NORMAL + "[+] " + item['snippet']['title'] + " --- " +
+                # item[ 'id'] + colorama.Style.RESET_ALL)
 
             i += 1  # For DEBUG
+
+        write_in_folder('uploads/song.txt', song_list)
 
     else:
         print('Aucune vidéo n\' été téléchargé')
 
-n
+
 if __name__ == "__main__":
     main()
