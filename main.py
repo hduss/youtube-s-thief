@@ -2,10 +2,12 @@
 import os
 import pickle
 import time
+import json
 import title
 import colorama
 import csv
 import google.oauth2.credentials
+from pytube import YouTube
 from tqdm import tqdm
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -14,6 +16,8 @@ from googleapiclient.discovery import build
 colorama.init()
 
 
+# Return build of API if authenticate OK
+# Create or refresh credentials
 def authenticate_youtube():
     # API information
     # API_KEY = "AIzaSyAYheEHWuVrMYXn4C4JKSv3OKMGUku73a4"
@@ -43,13 +47,23 @@ def authenticate_youtube():
     return youtube
 
 
+def get_playlists(build, channel_id):
+    request = build.playlists().list(
+        part="snippet",
+        mine="true",
+        maxResults=50
+
+    )
+    resp = request.execute()  # Query execution
+    return resp
+
+
 def get_videos(build):
     request = build.videos().list(
         part='contentDetails, snippet',
         myRating='like',
         maxResults=50
     )
-
     resp = request.execute()  # Query execution
     return resp
 
@@ -61,14 +75,13 @@ def get_video_next_page(build, next_page_token):
         maxResults=50,
         pageToken=next_page_token
     )
-
-    resp = request.execute()  # Query execution
+    resp = request.execute()
     return resp
 
 
-def write_in_folder(file, liste):
+def write_in_folder(file, song_list):
     with open(file, "w", encoding="utf-8") as f:
-        for song in tqdm(liste, desc="Writing song"):
+        for song in tqdm(song_list, desc="Writing song"):
             f.write(song + "\n")
 
 
@@ -76,17 +89,37 @@ def main():
     title.display_informations()
     nbr_pages = title.start_program()
     song_list = []
+    build = authenticate_youtube()  # get credentials
+
+
+    # channel_id = build['']
+    playlists = get_playlists(build, "UCS08XVYyOCxYvZNtovqdaAQ")
+    # print(json.dumps(playlists, indent=2))
+
+    url = "https://www.youtube.com/watch?v=m8j56gQHICw&list=LL&index=6&ab_channel=Laylow-Topic"
+    yt = YouTube(url)
+    print(yt.title)
+    print(yt.streams)
+    print(yt.streams.filter(only_audio=True).all)
+    stream = yt.streams.get_by_itag(139)
+    stream.download('downloads')
+
+    print('list of playlists find : ')
+
+    id_uploads = "UUS08XVYyOCxYvZNtovqdaAQ"
+
+    # list of title's playlists
+    for items in playlists['items']:
+        print(json.dumps(items['snippet']['localized']['title'], indent=2))
 
     if nbr_pages > 0:
 
-        build = authenticate_youtube()  # get credentials
         response = get_videos(build)  # get videos
         next_page_token = response['nextPageToken']
 
         print(colorama.Fore.GREEN + colorama.Style.NORMAL)
         # print(json.dumps(response, indent=2))  # Print results
         for item in tqdm(response['items'], desc="Processing page 1"):
-
             song = item['snippet']['title'] + " --- " + item['id']
             song_list.append(song)
 
@@ -103,7 +136,6 @@ def main():
             next_page_token = r['nextPageToken']
             # print("Next Page Token while => " + next_page_token)
             for item in tqdm(r['items'], desc="Processing page " + str(i + 1)):
-
                 song = item['snippet']['title'] + " --- " + item['id']
                 song_list.append(song)
 

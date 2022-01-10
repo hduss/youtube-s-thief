@@ -11,6 +11,7 @@ def start_program():
     print('A page contain 50 videos')
     print()
     nbr_pages = input(colorama.Back.GREEN + "How many pages do you want to download ? (enter 'ALL' for entire playlist) " + colorama.Style.RESET_ALL)
+
     return int(nbr_pages)
 
 

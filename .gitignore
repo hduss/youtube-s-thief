@@ -1,5 +1,7 @@
 .idea
 .idea/*
 /uploads
+/downloads
 token.pickle
 creds.json
+__pycache__/*
