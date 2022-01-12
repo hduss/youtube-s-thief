@@ -4,5 +4,9 @@
 /downloads
 token.pickle
 creds.json
+__pycache__
 __pycache__/
+__pycache__/*
+/__pycache__/
+/__pycache__/*
 youtubeList/__pychache/
