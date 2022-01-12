@@ -122,10 +122,21 @@ def main():
 
     if args.list:
         playlists = get_playlists(build, "UCS08XVYyOCxYvZNtovqdaAQ")
-        print('list of playlists find : ')
+        print('List of playlists find from your account :')
 
-        for items in playlists['items']:
-            print(json.dumps(items['snippet']['localized']['title'], indent=2))
+        playlists_list = []
+
+        for ids, items in enumerate(playlists['items'], start=1):
+            playlists_list.append(items['snippet']['localized']['title'])
+
+        playlists_list.insert(0, 'Liked videos')
+
+        for ids, items in enumerate(playlists_list):
+            print(ids, '-', items)
+
+        consent = input('Do you want download a playlist ? (Y/N) ')
+        if consent == 'Y' or consent == 'y':
+            playlist_id = input('Wich one ? (By ID) : ')
 
     elif args.download:
         print('je suis DL')
@@ -170,7 +181,7 @@ def main():
 
             i += 1  # For DEBUG
 
-        write_in_folder('uploads/song.txt', song_list)
+        write_in_folder('uploads/Liked videos.txt', song_list)
 
     else:
         print('No videos downloaded')

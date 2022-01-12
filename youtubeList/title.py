@@ -19,7 +19,7 @@ def start_program():
     print('Welcome to youtube\'s thief')
     print('Youtube\'s thief allows you to download part or all of your liked video on your youtube channel')
     print()
-    print('Chek main.py --help for informations')
+    print('Chek python main.py --help OR python main.py -h for informations')
 
 
     print(colorama.Style.RESET_ALL)
