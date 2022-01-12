@@ -1,11 +1,12 @@
 # API client library
+import youtubeList.title as title
 import os
 import pickle
 import time
 import json
-import title
 import colorama
 import csv
+import argparse
 import google.oauth2.credentials
 from pytube import YouTube
 from tqdm import tqdm
@@ -13,7 +14,23 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
+# Colorama init
 colorama.init()
+
+# Arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('-l', '--list', help='List of youtube playlists',
+                    nargs='?', const='playlist', type=str)
+parser.add_argument('-d', '--download', help='Download a playlist from his ID')
+parser.add_argument('-r', '--registered', help='List yout playlists registered in youtube\'s thief')
+args = parser.parse_args()
+
+print(args)
+
+
+#
+# if args.show:
+#     print(args.show)
 
 
 # Return build of API if authenticate OK
@@ -85,17 +102,7 @@ def write_in_folder(file, song_list):
             f.write(song + "\n")
 
 
-def main():
-    title.display_informations()
-    nbr_pages = title.start_program()
-    song_list = []
-    build = authenticate_youtube()  # get credentials
-
-
-    # channel_id = build['']
-    playlists = get_playlists(build, "UCS08XVYyOCxYvZNtovqdaAQ")
-    # print(json.dumps(playlists, indent=2))
-
+def download_playlist():
     url = "https://www.youtube.com/watch?v=m8j56gQHICw&list=LL&index=6&ab_channel=Laylow-Topic"
     yt = YouTube(url)
     print(yt.title)
@@ -104,13 +111,32 @@ def main():
     stream = yt.streams.get_by_itag(139)
     stream.download('downloads')
 
-    print('list of playlists find : ')
+
+def main():
+    nbr_pages = 0
+    song_list = []
+
+    title.start_program()
+    # nbr_pages = title.start_program()
+    build = authenticate_youtube()  # get credentials
+
+    if args.list:
+        playlists = get_playlists(build, "UCS08XVYyOCxYvZNtovqdaAQ")
+        print('list of playlists find : ')
+
+        for items in playlists['items']:
+            print(json.dumps(items['snippet']['localized']['title'], indent=2))
+
+    elif args.download:
+        print('je suis DL')
+    else:
+        print('No playlists found')
+
+    # channel_id = build['']
+
+    # print(json.dumps(playlists, indent=2))
 
     id_uploads = "UUS08XVYyOCxYvZNtovqdaAQ"
-
-    # list of title's playlists
-    for items in playlists['items']:
-        print(json.dumps(items['snippet']['localized']['title'], indent=2))
 
     if nbr_pages > 0:
 
@@ -147,7 +173,7 @@ def main():
         write_in_folder('uploads/song.txt', song_list)
 
     else:
-        print('Aucune vidéo n\' été téléchargé')
+        print('No videos downloaded')
 
 
 if __name__ == "__main__":
