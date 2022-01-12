@@ -14,30 +14,25 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
-# Colorama init
+# Colorama init and variables
 colorama.init()
+colorama_plus = '[' + colorama.Fore.GREEN + '+' + colorama.Style.RESET_ALL + ']'
+colorama_less = colorama.Fore.RED + '[-]' + colorama.Style.RESET_ALL
 
 # Arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-l', '--list', help='List of youtube playlists',
                     nargs='?', const='playlist', type=str)
+parser.add_argument('-r', '--registered', help='List your playlists registered in youtube\'s thief',
+                    nargs='?', const='playlist', type=str)
 parser.add_argument('-d', '--download', help='Download a playlist from his ID')
-parser.add_argument('-r', '--registered', help='List yout playlists registered in youtube\'s thief')
 args = parser.parse_args()
-
 print(args)
-
-
-#
-# if args.show:
-#     print(args.show)
 
 
 # Return build of API if authenticate OK
 # Create or refresh credentials
 def authenticate_youtube():
-    # API information
-    # API_KEY = "AIzaSyAYheEHWuVrMYXn4C4JKSv3OKMGUku73a4"
     api_service_name = "youtube"
     api_version = "v3"
     credentials = None
@@ -64,18 +59,28 @@ def authenticate_youtube():
     return youtube
 
 
-def get_playlists(build, channel_id):
+def get_playlists(build):
     request = build.playlists().list(
         part="snippet",
         mine="true",
         maxResults=50
-
     )
     resp = request.execute()  # Query execution
     return resp
 
 
-def get_videos(build):
+# playlist_id : 'LL' is for liked videos
+def get_playlists_items(build, playlist_id):
+    request = build.playlistItems().list(
+        part='contentDetails, snippet',
+        playlistId=playlist_id,
+        maxResults=50
+    )
+    resp = request.execute()  # Query execution
+    return resp
+
+
+def get_liked_videos(build):
     request = build.videos().list(
         part='contentDetails, snippet',
         myRating='like',
@@ -102,14 +107,18 @@ def write_in_folder(file, song_list):
             f.write(song + "\n")
 
 
-def download_playlist():
-    url = "https://www.youtube.com/watch?v=m8j56gQHICw&list=LL&index=6&ab_channel=Laylow-Topic"
-    yt = YouTube(url)
-    print(yt.title)
-    print(yt.streams)
-    print(yt.streams.filter(only_audio=True).all)
-    stream = yt.streams.get_by_itag(139)
-    stream.download('downloads')
+# def download_playlist():
+#     url = "https://www.youtube.com/watch?v=m8j56gQHICw&list=LL&index=6&ab_channel=Laylow-Topic"
+#     yt = YouTube(url)
+#     print(yt.title)
+#     print(yt.streams)
+#     print(yt.streams.filter(only_audio=True).all)
+#     stream = yt.streams.get_by_itag(139)
+#     stream.download('downloads')
+
+
+def search_existing_registered_playlist(playlist_name):
+    return os.path.isfile('uploads/' + playlist_name + '.txt')
 
 
 def main():
@@ -118,28 +127,59 @@ def main():
 
     title.start_program()
     # nbr_pages = title.start_program()
+
+    # Input if not authenticate on youtube
+    # auth_yt = input('You need to authenticate from youtube (Y/N) : ')
+
     build = authenticate_youtube()  # get credentials
-
+    channel_id = 'UCS08XVYyOCxYvZNtovqdaAQ'
     if args.list:
-        playlists = get_playlists(build, "UCS08XVYyOCxYvZNtovqdaAQ")
-        print('List of playlists find from your account :')
 
-        playlists_list = []
+        playlist_dico_2 = {}
+        playlists = get_playlists(build)
 
-        for ids, items in enumerate(playlists['items'], start=1):
-            playlists_list.append(items['snippet']['localized']['title'])
+        playlist_dico_2[1] = {'title': 'Liked videos', 'id': 'LL',
+                              'registered': search_existing_registered_playlist('Liked videos')}
 
-        playlists_list.insert(0, 'Liked videos')
+        for ids, items in enumerate(playlists['items'], start=2):
+            playlist_title = items['snippet']['localized']['title']
+            playlist_dico_2[ids] = {
+                'title': playlist_title,
+                'id': items['id'],
+                'registered': search_existing_registered_playlist(playlist_title)
+            }
 
-        for ids, items in enumerate(playlists_list):
-            print(ids, '-', items)
+        print(json.dumps(playlist_dico_2, indent=2))
 
-        consent = input('Do you want download a playlist ? (Y/N) ')
-        if consent == 'Y' or consent == 'y':
-            playlist_id = input('Wich one ? (By ID) : ')
+        while True:
 
+            print('List of playlists found from your account :')
+            for key, value in playlist_dico_2.items():
+                print(colorama_plus, key, '-', value['title'])
+
+            consent = input('Do you want download a playlist ? (Y/N) ')
+            if consent == 'Y' or consent == 'y':
+
+                playlist_id = int(input('Choose playlist by ID : '))
+                print(colorama_plus, 'Playlist choose : ', playlist_dico_2[int(playlist_id)]['title'])
+                playlist_items = get_playlists_items(build, playlist_dico_2[int(playlist_id)]['id'])
+                print(json.dumps(playlist_items, indent=2))
+
+                for item in playlist_items['items']:
+                    print(item)
+                    song = item['snippet']['title'] + " --- " + item['id']
+                    song_list.append(song)
+                write_in_folder('uploads/' + playlist_dico_2[int(playlist_id)]['title'] + '.txt', song_list)
+                song_list.clear()
+            else:
+                print('End of program ...')
+                return
+
+    elif args.registered:
+        print('je suis registered')
     elif args.download:
         print('je suis DL')
+        print(args.download)
     else:
         print('No playlists found')
 
@@ -151,7 +191,7 @@ def main():
 
     if nbr_pages > 0:
 
-        response = get_videos(build)  # get videos
+        response = get_liked_videos(build)  # get videos
         next_page_token = response['nextPageToken']
 
         print(colorama.Fore.GREEN + colorama.Style.NORMAL)

@@ -1,7 +1,4 @@
-import os
-
 import colorama
-import argparse
 
 colorama.init()
 
@@ -16,12 +13,11 @@ def start_download():
 def start_program():
     print_title()
     print(colorama.Fore.MAGENTA + colorama.Style.DIM + 'Version 0.0.1.5')
+    print()
     print('Welcome to youtube\'s thief')
     print('Youtube\'s thief allows you to download part or all of your liked video on your youtube channel')
     print()
     print('Chek python main.py --help OR python main.py -h for informations')
-
-
     print(colorama.Style.RESET_ALL)
 
 
@@ -39,5 +35,5 @@ def print_title():
     print(colorama.Style.RESET_ALL)
 
 
-def display_informations():
-    print()
+def display_infos():
+    print('Display informations function')
