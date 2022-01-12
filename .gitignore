@@ -1,10 +1,11 @@
 .idea
 .idea/*
-/uploads
-/downloads
+uploads/*
+downloads/*
 token.pickle
 creds.json
-__pycache__/
+client_secrets.json
+__pycache__
 youtubeList/__pychache/
 
 # Environments
