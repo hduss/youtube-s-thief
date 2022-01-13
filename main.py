@@ -86,6 +86,18 @@ def get_playlists_items(build, playlist_id):
     return resp
 
 
+# Get next videos from playlist if more than 50 videos
+def get_playlist_items_next(build, playlist_id, next_page_token):
+    request = build.playlistItems().list(
+        part='contentDetails, snippet',
+        playlistId=playlist_id,
+        maxResults=50,
+        pageToken=next_pagetoken
+    )
+    resp = request.execute()  # Query execution
+    return resp
+
+
 # Get videos from liked videos playlist
 def get_liked_videos(build):
     request = build.videos().list(
@@ -183,6 +195,7 @@ def main():
                 playlist_id = input('Choose playlist by ID : ')
                 print(colorama.Style.RESET_ALL)
 
+                # @todo : add verification for string input
                 if 1 <= int(playlist_id) < len(playlist_dictionary):
 
                     print(colorama_plus, 'Playlist choose : ', playlist_dictionary[int(playlist_id)]['title'])
@@ -221,9 +234,9 @@ def main():
 
     # Cut long videos
     elif args.cut:
-        print('args.cut')
+        print(args.cut)
 
-    # Traduction
+    # Traduce a song
     elif args.traduct:
         print(args.traduct)
 

@@ -13,12 +13,22 @@ Allows you to upload audio from youtube videos and playlists,
     4 - Select your profile from youtube to authenticate 
     5 - A file named token.pickle will be created in the credentials folder for future use
 
+## Environment
+    Pyhton3
+
 ## How it works
     python main.py --help to have all commands
     python main.py -l to list all your playlist from your account
-    
-![list of youtube account playlists](public/img/playlists_list.png?raw=true)
+
+    The first step is to save the playlists locally :
 
     
+![list of youtube account playlists](public/img/playlists_list.png?raw=true)
+    
+    (IN PROGRESS)
+    Once the playlist is saved, you can download it from the command: 
+    => python main.py --download to download playlistys registred locally
+    => python main.py --download https://youtube.com?list=zergvrezgreh to download plyalist
+    OR unique video
 
 
