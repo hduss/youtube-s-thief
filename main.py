@@ -2,6 +2,7 @@
 import youtubeList.title as title
 import os
 import pickle
+import requests
 import time
 import json
 import colorama
@@ -36,6 +37,7 @@ parser.add_argument('-l', '--list', help='Show all your youtube playlists to sav
 #                     action="store_true")
 parser.add_argument('-r', '--registered', help='List your locally saved playlists to then download the videos',
                     action="store_true")
+parser.add_argument('-t', '--traduct', help='Show all your youtube playlists to save them')
 parser.add_argument('--download', help='Download a playlist/video from his ID or from url')
 
 args = parser.parse_args()
@@ -156,7 +158,7 @@ def main():
         playlists = get_playlists(build)
         # Add liked videos in dictionary at 1st key
         playlist_dictionary[1] = {'title': 'Liked videos', 'id': 'LL',
-                              'registered': search_existing_registered_playlist('Liked videos')}
+                                  'registered': search_existing_registered_playlist('Liked videos')}
 
         for ids, items in enumerate(playlists['items'], start=2):
             playlist_title = items['snippet']['localized']['title']
@@ -186,7 +188,7 @@ def main():
                 playlist_id = input('Choose playlist by ID : ')
                 print(colorama.Style.RESET_ALL)
 
-                if isinstance(playlist_id, int) and 1 < playlist_id < len(playlist_dictionary):
+                if 1 <= int(playlist_id) < len(playlist_dictionary):
 
                     print(colorama_plus, 'Playlist choose : ', playlist_dictionary[int(playlist_id)]['title'])
                     playlist_items = get_playlists_items(build, playlist_dictionary[int(playlist_id)]['id'])
@@ -218,6 +220,11 @@ def main():
     elif args.download:
         print('je suis DL')
         print(args.download)
+        r = requests.get(args.download)
+        print(r)
+
+    elif args.traduct:
+        print(args.traduct)
 
     else:
         print('No playlists found')
