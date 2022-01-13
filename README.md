@@ -1,4 +1,4 @@
-# hduss/Youtube's-thief
+# Youtube's thief
 
  [![forthebadge](http://forthebadge.com/images/badges/powered-by-electricity.svg)](http://forthebadge.com)
 
