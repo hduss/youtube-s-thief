@@ -156,17 +156,13 @@ def compare_nbr_items_playlists():
 def main():
     nbr_pages = 0
     song_list = []
-
     title.start_program()
-    # nbr_pages = title.start_program()
-    # Input if not authenticate on youtube
-    # auth_yt = input('You need to authenticate from youtube (Y/N) : ')
-
-    build = authenticate_youtube()  # get credentials
 
     # Display playlists from youtube account
     if args.list:
 
+        # get credentials from youtube
+        build = authenticate_youtube()
         playlist_dictionary = {}
         playlists = get_playlists(build)
 
@@ -175,17 +171,18 @@ def main():
                                   'registered': search_existing_registered_playlist('Liked videos')}
 
         for ids, items in enumerate(playlists['items'], start=2):
+
             playlist_title = items['snippet']['localized']['title']
             playlist_dictionary[ids] = {
                 'title': playlist_title,
                 'id': items['id'],
                 'registered': search_existing_registered_playlist(playlist_title)
             }
+
         # print(json.dumps(playlist_dico_2, indent=2))
         while True:
 
-            print('List of playlists found from your account :')
-            print()
+            print('List of playlists found from your account :\n')
 
             for key, value in playlist_dictionary.items():
                 registered = colorama.Fore.RED + ' (Playlist no registered localy) ' + colorama.Style.RESET_ALL
@@ -263,12 +260,22 @@ def main():
         else:
 
             files = os.listdir("uploads")
-            print(files)
+            files_new = {}
+            i = 0
+            j = 1
+            while i < len(files):
+                if files[i][0] != '.':
+                    files_new[j] = {'title': files[i]}
+                    j = j + 1
+                i = i + 1
 
-            for file in files:
-                print(file[0])
+            print('List of playlists registered locally :' + '\n')
+            for key, file in files_new.items():
+                print(colorama_plus, key, '-', file['title'])
 
-            print(args.download)
+            # @todo : add verification for string input
+            playlist_id = input('\nChoose a file to download (by ID) : ')
+
 
 
     # Cut long videos
