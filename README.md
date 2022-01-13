@@ -5,10 +5,6 @@
 Allows you to upload audio from youtube videos and playlists,
 
 
-> Récupérer des flux de données de sites marchands,
-> créer ou mettre à jour des offres de produits et
-> afficher ces offres sur la partie publique. 
-
 ## Prerequisites
     1 - Create an api key for youtube-api, follow this tutorial : 
     2 - Add your token in a file client_secrets.json in credentials folder
