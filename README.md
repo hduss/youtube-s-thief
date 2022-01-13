@@ -23,7 +23,7 @@ Allows you to upload audio from youtube videos and playlists,
     The first step is to save the playlists locally :
 
     
-![list of youtube account playlists](public/img/playlists_list.png?raw=true)
+![list of youtube account playlists](public/img/playlists_list_example.png?raw=true)
     
     (IN PROGRESS)
     Once the playlist is saved, you can download it from the command: 
