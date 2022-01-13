@@ -29,7 +29,8 @@ parser.add_argument('-l', '--list', help='Show all your youtube playlists to sav
 parser.add_argument('-r', '--registered', help='List your locally saved playlists to then download the videos',
                     action="store_true")
 parser.add_argument('-t', '--traduct', help='Show all your youtube playlists to save them')
-parser.add_argument('-d', '--download', help='Download a playlist/video from his ID or from url')
+parser.add_argument('-d', '--download', help='Download a playlist/video from his ID or from url',
+                    nargs='?', const="download_playlist")
 parser.add_argument('-c', '--cut', help='cut a video in several song')
 args = parser.parse_args()
 print(args)
@@ -92,10 +93,39 @@ def get_playlist_items_next(build, playlist_id, next_page_token):
         part='contentDetails, snippet',
         playlistId=playlist_id,
         maxResults=50,
-        pageToken=next_pagetoken
+        pageToken=next_page_token
     )
     resp = request.execute()  # Query execution
     return resp
+
+
+def get_all_videos_from_playlist_items():
+    playlist_items = get_playlists_items(build, playlist_dictionary[int(playlist_id)]['id'])
+    try:
+        next_page_token = playlist_items['nextPageToken']
+    except:
+        next_page_token = ''
+
+    for item in playlist_items['items']:
+        song = item['snippet']['title'] + " --- " + item['id']
+        song_list.append(song)
+
+    # If there is more than 50 videos in playlist
+    while next_page_token != '':
+
+        playlist_items_next = get_playlist_items_next(build, playlist_dictionary[int(playlist_id)][
+            'id'], next_page_token)
+
+        try:
+            next_page_token = playlist_items_next['nextPageToken']
+        except:
+            next_page_token = ''
+
+        print('next page token => ', next_page_token)
+        for item in tqdm(playlist_items_next['items']):
+            song = item['snippet']['title'] + " --- " + item['id']
+            song_list.append(song)
+    print('playlist items videos ')
 
 
 # Get videos from liked videos playlist
@@ -142,6 +172,11 @@ def search_existing_registered_playlist(playlist_name):
     return os.path.isfile('uploads/' + playlist_name + '.txt')
 
 
+# Exclude hidden files for search in folders
+def exclude_hidden_files():
+    print('hidden files')
+
+
 def compare_nbr_items_playlists():
     print('compare')
 
@@ -163,6 +198,7 @@ def main():
 
         playlist_dictionary = {}
         playlists = get_playlists(build)
+
         # Add liked videos in dictionary at 1st key
         playlist_dictionary[1] = {'title': 'Liked videos', 'id': 'LL',
                                   'registered': search_existing_registered_playlist('Liked videos')}
@@ -196,14 +232,34 @@ def main():
                 print(colorama.Style.RESET_ALL)
 
                 # @todo : add verification for string input
-                if 1 <= int(playlist_id) < len(playlist_dictionary):
+                if 1 <= int(playlist_id) <= len(playlist_dictionary):
 
                     print(colorama_plus, 'Playlist choose : ', playlist_dictionary[int(playlist_id)]['title'])
                     playlist_items = get_playlists_items(build, playlist_dictionary[int(playlist_id)]['id'])
+                    try:
+                        next_page_token = playlist_items['nextPageToken']
+                    except:
+                        next_page_token = ''
 
                     for item in playlist_items['items']:
                         song = item['snippet']['title'] + " --- " + item['id']
                         song_list.append(song)
+
+                    # If there is more than 50 videos in playlist
+                    while next_page_token != '':
+
+                        playlist_items_next = get_playlist_items_next(build, playlist_dictionary[int(playlist_id)][
+                            'id'], next_page_token)
+
+                        try:
+                            next_page_token = playlist_items_next['nextPageToken']
+                        except:
+                            next_page_token = ''
+
+                        print('next page token => ', next_page_token)
+                        for item in tqdm(playlist_items_next['items']):
+                            song = item['snippet']['title'] + " --- " + item['id']
+                            song_list.append(song)
 
                     write_in_folder('uploads/' + playlist_dictionary[int(playlist_id)]['title'] + '.txt', song_list)
 
@@ -211,6 +267,7 @@ def main():
                     song_list.clear()
                     if search_existing_registered_playlist(playlist_dictionary[int(playlist_id)]['title']):
                         playlist_dictionary[int(playlist_id)]['registered'] = True
+
                 else:
                     print(colorama_less + colorama.Fore.RED + ' Error : Value ' + playlist_id + ' is not valid' +
                           colorama_end)
@@ -227,10 +284,21 @@ def main():
 
     # Download directly from an ID or url
     elif args.download:
-        print('je suis DL')
-        print(args.download)
-        r = requests.get(args.download)
-        print(r)
+
+        if args.download != 'download_playlist':
+            print('URL is required here')
+            # r = requests.get(args.download)
+            # print(r)
+        else:
+
+            files = os.listdir("uploads")
+            print(files)
+
+            for file in files:
+                print(file[0])
+
+            print(args.download)
+
 
     # Cut long videos
     elif args.cut:
