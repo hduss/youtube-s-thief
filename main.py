@@ -21,11 +21,13 @@ colorama_less = colorama.Fore.RED + '[-]' + colorama.Style.RESET_ALL
 
 # Arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('-l', '--list', help='List of youtube playlists',
-                    nargs='?', const='playlist', type=str)
+parser.add_argument('-l', '--list', help='Display all your Youtube\'s playlists', action='store_true')
+parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                    action="store_true")
 parser.add_argument('-r', '--registered', help='List your playlists registered in youtube\'s thief',
                     nargs='?', const='playlist', type=str)
 parser.add_argument('-d', '--download', help='Download a playlist from his ID')
+
 args = parser.parse_args()
 print(args)
 
@@ -36,8 +38,8 @@ def authenticate_youtube():
     api_service_name = "youtube"
     api_version = "v3"
     credentials = None
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
+    if os.path.exists("credentials/token.pickle"):
+        with open("credentials/token.pickle", "rb") as token:
             credentials = pickle.load(token)
 
     # if there are no (valid) credentials availablle, let the user log in.
@@ -46,13 +48,13 @@ def authenticate_youtube():
             credentials.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'client_secrets.json',
+                'credentials/client_secrets.json',
                 scopes=['https://www.googleapis.com/auth/youtube.readonly']
             )
             flow.run_local_server()
             credentials = flow.credentials
         # save the credentials for the next run
-        with open("token.pickle", "wb") as token:
+        with open("credentials/token.pickle", "wb") as token:
             pickle.dump(credentials, token)
 
     youtube = build(api_service_name, api_version, credentials=credentials)
@@ -121,6 +123,10 @@ def search_existing_registered_playlist(playlist_name):
     return os.path.isfile('uploads/' + playlist_name + '.txt')
 
 
+def compare_nbr_items_playlists():
+    print('compare')
+
+
 def main():
     nbr_pages = 0
     song_list = []
@@ -149,21 +155,23 @@ def main():
                 'registered': search_existing_registered_playlist(playlist_title)
             }
 
-        print(json.dumps(playlist_dico_2, indent=2))
+        # print(json.dumps(playlist_dico_2, indent=2))
 
         while True:
 
             print('List of playlists found from your account :')
+
             for key, value in playlist_dico_2.items():
                 print(colorama_plus, key, '-', value['title'])
 
             consent = input('Do you want download a playlist ? (Y/N) ')
+
             if consent == 'Y' or consent == 'y':
 
                 playlist_id = int(input('Choose playlist by ID : '))
                 print(colorama_plus, 'Playlist choose : ', playlist_dico_2[int(playlist_id)]['title'])
                 playlist_items = get_playlists_items(build, playlist_dico_2[int(playlist_id)]['id'])
-                print(json.dumps(playlist_items, indent=2))
+                # print(json.dumps(playlist_items, indent=2))
 
                 for item in playlist_items['items']:
                     print(item)
@@ -176,10 +184,15 @@ def main():
                 return
 
     elif args.registered:
-        print('je suis registered')
+
+        print(os.listdir("uploads"))
+
     elif args.download:
         print('je suis DL')
         print(args.download)
+
+    elif args.playlist:
+        print('je suis PL')
     else:
         print('No playlists found')
 

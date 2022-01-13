@@ -2,9 +2,9 @@
 .idea/*
 uploads/*
 downloads/*
-token.pickle
+credentials/token.pickle
 creds.json
-client_secrets.json
+credentials/client_secrets.json
 __pycache__
 youtubeList/__pychache/
 
