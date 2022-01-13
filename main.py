@@ -22,28 +22,17 @@ colorama_less = '[' + colorama.Fore.RED + '-' + colorama.Style.RESET_ALL + ']'
 colorama_yellow = colorama.Fore.YELLOW
 colorama_end = colorama.Style.RESET_ALL
 
-
-# @todo: Need change color arg
-def colorama_color_variable(text, color):
-    # return colorama.Fore.color.upper() + text + colorama.Style.RESET_ALL
-    print('colorama_color')
-
-
 # Arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-l', '--list', help='Show all your youtube playlists to save them',
                     action='store_true')
-# parser.add_argument("-v", "--verbose", help="increase output verbosity",
-#                     action="store_true")
 parser.add_argument('-r', '--registered', help='List your locally saved playlists to then download the videos',
                     action="store_true")
 parser.add_argument('-t', '--traduct', help='Show all your youtube playlists to save them')
-parser.add_argument('--download', help='Download a playlist/video from his ID or from url')
-
+parser.add_argument('-d', '--download', help='Download a playlist/video from his ID or from url')
+parser.add_argument('-c', '--cut', help='cut a video in several song')
 args = parser.parse_args()
-
-
-# print(args)
+print(args)
 
 
 # Return build of API if authenticate OK
@@ -75,6 +64,7 @@ def authenticate_youtube():
     return youtube
 
 
+# Get playlists from youtube account
 def get_playlists(build):
     request = build.playlists().list(
         part="snippet",
@@ -85,7 +75,7 @@ def get_playlists(build):
     return resp
 
 
-# playlist_id : 'LL' is for liked videos
+# Get all videos from a playlist by id's playlist
 def get_playlists_items(build, playlist_id):
     request = build.playlistItems().list(
         part='contentDetails, snippet',
@@ -96,6 +86,7 @@ def get_playlists_items(build, playlist_id):
     return resp
 
 
+# Get videos from liked videos playlist
 def get_liked_videos(build):
     request = build.videos().list(
         part='contentDetails, snippet',
@@ -106,6 +97,7 @@ def get_liked_videos(build):
     return resp
 
 
+# get next page from youtube-api (if there is more than 50 videos per playlist)
 def get_video_next_page(build, next_page_token):
     request = build.videos().list(
         part='contentDetails, snippet',
@@ -117,6 +109,7 @@ def get_video_next_page(build, next_page_token):
     return resp
 
 
+# registered song name and yoputube id in file (/uploads)
 def write_in_folder(file, song_list):
     with open(file, "w", encoding="utf-8") as f:
         for song in tqdm(song_list, desc="Writing song"):
@@ -132,7 +125,7 @@ def write_in_folder(file, song_list):
 #     stream = yt.streams.get_by_itag(139)
 #     stream.download('downloads')
 
-
+# Search if playlist is already registered in uploads folder
 def search_existing_registered_playlist(playlist_name):
     return os.path.isfile('uploads/' + playlist_name + '.txt')
 
@@ -141,6 +134,7 @@ def compare_nbr_items_playlists():
     print('compare')
 
 
+# Main function
 def main():
     nbr_pages = 0
     song_list = []
@@ -152,6 +146,7 @@ def main():
 
     build = authenticate_youtube()  # get credentials
 
+    # Display playlists from youtube account
     if args.list:
 
         playlist_dictionary = {}
@@ -192,7 +187,6 @@ def main():
 
                     print(colorama_plus, 'Playlist choose : ', playlist_dictionary[int(playlist_id)]['title'])
                     playlist_items = get_playlists_items(build, playlist_dictionary[int(playlist_id)]['id'])
-                    # print(json.dumps(playlist_items, indent=2))
 
                     for item in playlist_items['items']:
                         song = item['snippet']['title'] + " --- " + item['id']
@@ -200,7 +194,7 @@ def main():
 
                     write_in_folder('uploads/' + playlist_dictionary[int(playlist_id)]['title'] + '.txt', song_list)
 
-                    # CLear and MAJ datas for while loop
+                    # CLear and MAJ datas for while loop after registered a playlist
                     song_list.clear()
                     if search_existing_registered_playlist(playlist_dictionary[int(playlist_id)]['title']):
                         playlist_dictionary[int(playlist_id)]['registered'] = True
@@ -213,27 +207,28 @@ def main():
                 print('End of program ...')
                 return
 
+    # Verify if a playlist is already registered locally (/uploads)
     elif args.registered:
 
         print(os.listdir("uploads"))
 
+    # Download directly from an ID or url
     elif args.download:
         print('je suis DL')
         print(args.download)
         r = requests.get(args.download)
         print(r)
 
+    # Cut long videos
+    elif args.cut:
+        print('args.cut')
+
+    # Traduction
     elif args.traduct:
         print(args.traduct)
 
     else:
         print('No playlists found')
-
-    # channel_id = build['']
-
-    # print(json.dumps(playlists, indent=2))
-
-    id_uploads = "UUS08XVYyOCxYvZNtovqdaAQ"
 
     if nbr_pages > 0:
 
