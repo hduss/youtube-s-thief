@@ -99,35 +99,6 @@ def get_playlist_items_next(build, playlist_id, next_page_token):
     return resp
 
 
-def get_all_videos_from_playlist_items():
-    playlist_items = get_playlists_items(build, playlist_dictionary[int(playlist_id)]['id'])
-    try:
-        next_page_token = playlist_items['nextPageToken']
-    except:
-        next_page_token = ''
-
-    for item in playlist_items['items']:
-        song = item['snippet']['title'] + " --- " + item['id']
-        song_list.append(song)
-
-    # If there is more than 50 videos in playlist
-    while next_page_token != '':
-
-        playlist_items_next = get_playlist_items_next(build, playlist_dictionary[int(playlist_id)][
-            'id'], next_page_token)
-
-        try:
-            next_page_token = playlist_items_next['nextPageToken']
-        except:
-            next_page_token = ''
-
-        print('next page token => ', next_page_token)
-        for item in tqdm(playlist_items_next['items']):
-            song = item['snippet']['title'] + " --- " + item['id']
-            song_list.append(song)
-    print('playlist items videos ')
-
-
 # Get videos from liked videos playlist
 def get_liked_videos(build):
     request = build.videos().list(
