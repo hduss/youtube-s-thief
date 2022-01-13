@@ -17,19 +17,31 @@ from googleapiclient.discovery import build
 # Colorama init and variables
 colorama.init()
 colorama_plus = '[' + colorama.Fore.GREEN + '+' + colorama.Style.RESET_ALL + ']'
-colorama_less = colorama.Fore.RED + '[-]' + colorama.Style.RESET_ALL
+colorama_less = '[' + colorama.Fore.RED + '-' + colorama.Style.RESET_ALL + ']'
+colorama_yellow = colorama.Fore.YELLOW
+colorama_end = colorama.Style.RESET_ALL
+
+
+# @todo: Need change color arg
+def colorama_color_variable(text, color):
+    # return colorama.Fore.color.upper() + text + colorama.Style.RESET_ALL
+    print('colorama_color')
+
 
 # Arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('-l', '--list', help='Display all your Youtube\'s playlists', action='store_true')
-parser.add_argument("-v", "--verbose", help="increase output verbosity",
+parser.add_argument('-l', '--list', help='Show all your youtube playlists to save them',
+                    action='store_true')
+# parser.add_argument("-v", "--verbose", help="increase output verbosity",
+#                     action="store_true")
+parser.add_argument('-r', '--registered', help='List your locally saved playlists to then download the videos',
                     action="store_true")
-parser.add_argument('-r', '--registered', help='List your playlists registered in youtube\'s thief',
-                    nargs='?', const='playlist', type=str)
-parser.add_argument('-d', '--download', help='Download a playlist from his ID')
+parser.add_argument('--download', help='Download a playlist/video from his ID or from url')
 
 args = parser.parse_args()
-print(args)
+
+
+# print(args)
 
 
 # Return build of API if authenticate OK
@@ -133,52 +145,68 @@ def main():
 
     title.start_program()
     # nbr_pages = title.start_program()
-
     # Input if not authenticate on youtube
     # auth_yt = input('You need to authenticate from youtube (Y/N) : ')
 
     build = authenticate_youtube()  # get credentials
-    channel_id = 'UCS08XVYyOCxYvZNtovqdaAQ'
+
     if args.list:
 
-        playlist_dico_2 = {}
+        playlist_dictionary = {}
         playlists = get_playlists(build)
-
-        playlist_dico_2[1] = {'title': 'Liked videos', 'id': 'LL',
+        # Add liked videos in dictionary at 1st key
+        playlist_dictionary[1] = {'title': 'Liked videos', 'id': 'LL',
                               'registered': search_existing_registered_playlist('Liked videos')}
 
         for ids, items in enumerate(playlists['items'], start=2):
             playlist_title = items['snippet']['localized']['title']
-            playlist_dico_2[ids] = {
+            playlist_dictionary[ids] = {
                 'title': playlist_title,
                 'id': items['id'],
                 'registered': search_existing_registered_playlist(playlist_title)
             }
-
         # print(json.dumps(playlist_dico_2, indent=2))
-
         while True:
 
             print('List of playlists found from your account :')
+            print()
 
-            for key, value in playlist_dico_2.items():
-                print(colorama_plus, key, '-', value['title'])
+            for key, value in playlist_dictionary.items():
+                registered = colorama.Fore.RED + ' (Playlist no registered localy) ' + colorama.Style.RESET_ALL
+                if value['registered']:
+                    registered = colorama.Fore.GREEN + ' (Playlist allready registered localy) ' + colorama.Style.RESET_ALL
 
-            consent = input('Do you want download a playlist ? (Y/N) ')
+                print(colorama_plus, key, '-', value['title'] + registered)
+
+            print(colorama_yellow)
+            consent = input('Do you want download a playlist locally ? (Y/N) ')
 
             if consent == 'Y' or consent == 'y':
 
-                playlist_id = int(input('Choose playlist by ID : '))
-                print(colorama_plus, 'Playlist choose : ', playlist_dico_2[int(playlist_id)]['title'])
-                playlist_items = get_playlists_items(build, playlist_dico_2[int(playlist_id)]['id'])
-                # print(json.dumps(playlist_items, indent=2))
+                playlist_id = input('Choose playlist by ID : ')
+                print(colorama.Style.RESET_ALL)
 
-                for item in playlist_items['items']:
-                    print(item)
-                    song = item['snippet']['title'] + " --- " + item['id']
-                    song_list.append(song)
-                write_in_folder('uploads/' + playlist_dico_2[int(playlist_id)]['title'] + '.txt', song_list)
-                song_list.clear()
+                if isinstance(playlist_id, int) and 1 < playlist_id < len(playlist_dictionary):
+
+                    print(colorama_plus, 'Playlist choose : ', playlist_dictionary[int(playlist_id)]['title'])
+                    playlist_items = get_playlists_items(build, playlist_dictionary[int(playlist_id)]['id'])
+                    # print(json.dumps(playlist_items, indent=2))
+
+                    for item in playlist_items['items']:
+                        song = item['snippet']['title'] + " --- " + item['id']
+                        song_list.append(song)
+
+                    write_in_folder('uploads/' + playlist_dictionary[int(playlist_id)]['title'] + '.txt', song_list)
+
+                    # CLear and MAJ datas for while loop
+                    song_list.clear()
+                    if search_existing_registered_playlist(playlist_dictionary[int(playlist_id)]['title']):
+                        playlist_dictionary[int(playlist_id)]['registered'] = True
+                else:
+                    print(colorama_less + colorama.Fore.RED + ' Error : Value ' + playlist_id + ' is not valid' +
+                          colorama_end)
+                    print()
+
             else:
                 print('End of program ...')
                 return
@@ -191,8 +219,6 @@ def main():
         print('je suis DL')
         print(args.download)
 
-    elif args.playlist:
-        print('je suis PL')
     else:
         print('No playlists found')
 
