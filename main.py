@@ -4,6 +4,7 @@ import youtubeList.settings as settings
 import os
 import pickle
 import requests
+import json
 import colorama
 import argparse
 import google.oauth2.credentials
@@ -124,8 +125,8 @@ def get_video_next_page(build, next_page_token):
 
 # registered song name and yoputube id in file (/uploads)
 def write_in_folder(file, song_list):
-    with open(file, "w", encoding="utf-8") as f:
-        for song in tqdm(song_list, desc="Writing song"):
+    with open(file, 'w', encoding='utf-8') as f:
+        for song in tqdm(song_list, desc='Writing song'):
             f.write(song + "\n")
 
 
@@ -135,26 +136,27 @@ def download_playlist(filename, file_format):
     print('File in function => ', filename)
     with open('uploads/' + filename, encoding="utf8") as lines:
 
-        for line in lines:
+        for line in tqdm(lines, desc='Downloading in progress ... '):
             split_line = line.split('---')
             video_id = split_line[1]
             # print(split_line)
             print(split_line[1])
             # print(line)
 
-            # url = 'https://www.youtube.com/watch?v=' + video_id
-            # yt = YouTube(url)
-            # # print(yt.title)
-            # # print(yt.streams)
-            # stream = yt.streams.filter(only_audio=True).first()
+            url = 'https://www.youtube.com/watch?v=' + video_id.replace(" ", "")
+            print(url)
+            yt = YouTube(url)
+            print(yt.title)
+            # print(yt.streams)
+            stream = yt.streams.filter(only_audio=True).first()
             #
-            # # download the file
-            # out_file = stream.download(output_path='downloads')
+            # download the file
+            out_file = stream.download(output_path='downloads')
             #
-            # # save the file
-            # base, ext = os.path.splitext(out_file)
-            # new_file = base + '.' + file_format
-            # os.rename(out_file, new_file)
+            # save the file
+            base, ext = os.path.splitext(out_file)
+            new_file = base + '.' + file_format
+            os.rename(out_file, new_file)
 
 
 # Search if playlist is already registered in uploads folder
@@ -228,7 +230,8 @@ def main():
                         next_page_token = ''
 
                     for item in playlist_items['items']:
-                        song = item['snippet']['title'] + " --- " + item['id']
+                        video_id = item['snippet']['resourceId']['videoId']
+                        song = item['snippet']['title'] + " --- " + video_id
                         song_list.append(song)
 
                     # If there is more than 50 videos in playlist
@@ -244,7 +247,8 @@ def main():
 
                         print('next page token => ', next_page_token)
                         for item in tqdm(playlist_items_next['items']):
-                            song = item['snippet']['title'] + " --- " + item['id']
+                            video_id = item['snippet']['resourceId']['videoId']
+                            song = item['snippet']['title'] + " --- " + video_id
                             song_list.append(song)
 
                     write_in_folder('uploads/' + playlist_dictionary[int(playlist_id)]['title'] + '.txt', song_list)
