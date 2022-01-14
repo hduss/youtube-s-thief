@@ -16,6 +16,7 @@ from googleapiclient.discovery import build
 # Colorama init and variables
 colorama.init()
 colorama_plus = '[' + colorama.Fore.GREEN + '+' + colorama.Style.RESET_ALL + ']'
+colorama_plus_yellow = '[' + colorama.Fore.YELLOW + '+' + colorama.Style.RESET_ALL + ']'
 colorama_less = '[' + colorama.Fore.RED + '-' + colorama.Style.RESET_ALL + ']'
 colorama_yellow = colorama.Fore.YELLOW
 colorama_end = colorama.Style.RESET_ALL
@@ -26,7 +27,8 @@ parser.add_argument('-l', '--list', help='Show all your youtube playlists to sav
                     action='store_true')
 parser.add_argument('-r', '--registered', help='List your locally saved playlists to then download the videos',
                     action="store_true")
-parser.add_argument('-t', '--traduct', help='Show all your youtube playlists to save them')
+parser.add_argument('-t', '--test', help='Show all your youtube playlists to save them',
+                    action='store_true')
 parser.add_argument('-d', '--download', help='Download a playlist/video from his ID or from url',
                     nargs='?', const="download_playlist")
 parser.add_argument('-c', '--cut', help='cut a video in several song')
@@ -127,22 +129,32 @@ def write_in_folder(file, song_list):
             f.write(song + "\n")
 
 
-# Downloading a song or video
-def download_playlist(format):
-    url = "https://www.youtube.com/watch?v=DO8NSL5Wyeg&list=LL&index=5&ab_channel=StromaeVEVO"
-    yt = YouTube(url)
-    print(yt.title)
-    print(yt.streams)
-    # print(yt.streams.filter(only_audio=True).first())
-    stream = yt.streams.filter(only_audio=True).first()
+# Downloading a playlist from .txt file
+def download_playlist(filename, file_format):
 
-    # download the file
-    out_file = stream.download(output_path='downloads')
+    print('File in function => ', filename)
+    with open('uploads/' + filename, encoding="utf8") as lines:
 
-    # save the file
-    base, ext = os.path.splitext(out_file)
-    new_file = base + '.' + format
-    os.rename(out_file, new_file)
+        for line in lines:
+            split_line = line.split('---')
+            video_id = split_line[1]
+            # print(split_line)
+            print(split_line[1])
+            # print(line)
+
+            # url = 'https://www.youtube.com/watch?v=' + video_id
+            # yt = YouTube(url)
+            # # print(yt.title)
+            # # print(yt.streams)
+            # stream = yt.streams.filter(only_audio=True).first()
+            #
+            # # download the file
+            # out_file = stream.download(output_path='downloads')
+            #
+            # # save the file
+            # base, ext = os.path.splitext(out_file)
+            # new_file = base + '.' + file_format
+            # os.rename(out_file, new_file)
 
 
 # Search if playlist is already registered in uploads folder
@@ -244,12 +256,11 @@ def main():
 
                 else:
                     print(colorama_less + colorama.Fore.RED + ' Error : Value ' + playlist_id + ' is not valid' +
-                          colorama_end)
-                    print()
+                          colorama_end + '\n')
 
             else:
                 print('End of program ...')
-                return
+                break
 
     # Verify if a playlist is already registered locally (/uploads)
     elif args.registered:
@@ -279,11 +290,25 @@ def main():
             for key, file in files_new.items():
                 print(colorama_plus, key, '-', file['title'])
 
-            # download_playlist('mp3')
             # @todo : add verification for string input
             playlist_id = input('\nChoose a file to download (by ID) : ')
             selected_file = files_new[int(playlist_id)]
             print('File selected : ', selected_file['title'])
+
+            while True:
+                print('Format available : ')
+
+                for f in settings.DOWNLOAD_VALID_FORMAT:
+                    print(colorama_plus + ' - ' + f)
+                file_format = input('Please enter the format (default mp3) : ')
+                if file_format == '':
+                    file_format = 'mp3'
+
+                if file_format in settings.DOWNLOAD_VALID_FORMAT:
+                    download_playlist(selected_file['title'], file_format)
+                    break
+
+
 
 
 
@@ -292,8 +317,12 @@ def main():
         print(args.cut)
 
     # Traduce a song
-    elif args.traduct:
-        print(args.traduct)
+    elif args.test:
+        print(args.test)
+        with open('uploads/Liked videos.txt', encoding="utf8") as lines:
+
+            for line in reader:
+                print(line)
 
     else:
         print('No argument')
