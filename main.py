@@ -7,6 +7,7 @@ import requests
 import json
 import colorama
 import argparse
+import youtube_dl
 import google.oauth2.credentials
 from pytube import Playlist, YouTube
 from tqdm import tqdm
@@ -170,7 +171,6 @@ def download_playlist(filename, file_format):
                         print(colorama_plus + f' New file {video_name}.{file_format} is saved')
                 else:
                     print(colorama_less + f' File {video_name}.{file_format} already exist')
-
 
         print(f'{counter_corrupt_videos} videos is corrupted')
 
@@ -340,14 +340,24 @@ def main():
     # Traduce a song
     elif args.test:
         print(args.test)
-        url = 'https://www.youtube.com/playlist?list=PLmdNJkj26L9bt-MQdqlKJFy2yh8699QzO'
-        p = Playlist(url)
+        ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
 
-        for video in p.videos:
-            print(video)
-            # video.streams.first().download()
-        for url in p.video_urls[:3]:
-            print(url)
+        with ydl:
+            result = ydl.extract_info(
+                'https://www.youtube.com/watch?v=RLJnsU5VlAY&ab_channel=2nOfficiel',
+                download=True  # We just want to extract the info
+            )
+
+        if 'entries' in result:
+            # Can be a playlist or a list of videos
+            video = result['entries'][0]
+        else:
+            # Just a video
+            video = result
+
+        print(video)
+        video_url = video['url']
+        print(video_url)
 
     else:
         print('No argument')
