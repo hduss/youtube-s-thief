@@ -151,25 +151,26 @@ def download_playlist(filename, file_format):
 
             try:
                 yt = YouTube(url)
-                # test availability on url
-                yt.check_availability()
+                yt.check_availability()  # test availability on url
             except:
-                print(f'Video {url} is unavaialable, skipping.')
                 counter_corrupt_videos += 1
             else:
 
                 stream = yt.streams.filter(only_audio=True).first()
-                file_exist = os.path.isfile('downloads/' + video_name + '.' + file_format)
+                file_exist = os.path.isfile('downloads/' + folder_name + '/' + video_name + '.' + file_format)
 
                 if not file_exist:
                     # download the file
-                    out_file = stream.download(output_path='downloads')
+                    out_file = stream.download(output_path='downloads/' + folder_name)
                     if out_file:
                         # save the file
                         base, ext = os.path.splitext(out_file)
                         new_file = base + '.' + file_format
-                        print('new file => ', new_file)
                         os.rename(out_file, new_file)
+                        print(colorama_plus + f' New file {video_name}.{file_format} is saved')
+                else:
+                    print(colorama_less + f' File {video_name}.{file_format} already exist')
+
 
         print(f'{counter_corrupt_videos} videos is corrupted')
 
