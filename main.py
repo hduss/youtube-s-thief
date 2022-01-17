@@ -139,6 +139,7 @@ def download_playlist(filename, file_format):
     with open('uploads/' + filename, encoding="utf8") as lines:
 
         folder_name = filename.split('.txt')[0]
+        counter_corrupt_videos = 0
 
         for line in lines:
 
@@ -154,7 +155,7 @@ def download_playlist(filename, file_format):
                 yt.check_availability()
             except:
                 print(f'Video {url} is unavaialable, skipping.')
-                # @todo: move video name in file exception (ex : )
+                counter_corrupt_videos += 1
             else:
 
                 stream = yt.streams.filter(only_audio=True).first()
@@ -169,6 +170,8 @@ def download_playlist(filename, file_format):
                         new_file = base + '.' + file_format
                         print('new file => ', new_file)
                         os.rename(out_file, new_file)
+
+        print(f'{counter_corrupt_videos} videos is corrupted')
 
 
 # Search if playlist is already registered in uploads folder
