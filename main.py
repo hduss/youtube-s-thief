@@ -8,7 +8,7 @@ import json
 import colorama
 import argparse
 import google.oauth2.credentials
-from pytube import YouTube
+from pytube import Playlist, YouTube
 from tqdm import tqdm
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -47,11 +47,14 @@ def authenticate_youtube():
         with open("credentials/token.pickle", "rb") as token:
             credentials = pickle.load(token)
 
-    # if there are no (valid) credentials availablle, let the user log in.
+    # if there are no (valid) credentials available, let the user log in.
     if not credentials or not credentials.valid:
         if credentials and credentials.expired and credentials.refresh_token:
+            print('passe la')
             credentials.refresh(Request())
+            print(credentials)
         else:
+            print('pase ici')
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials/client_secrets.json',
                 scopes=['https://www.googleapis.com/auth/youtube.readonly']
@@ -132,31 +135,40 @@ def write_in_folder(file, song_list):
 
 # Downloading a playlist from .txt file
 def download_playlist(filename, file_format):
-
-    print('File in function => ', filename)
+    print('Filename in function => ', filename)
     with open('uploads/' + filename, encoding="utf8") as lines:
 
-        for line in tqdm(lines, desc='Downloading in progress ... '):
-            split_line = line.split('---')
-            video_id = split_line[1]
-            # print(split_line)
-            print(split_line[1])
-            # print(line)
+        folder_name = filename.split('.txt')[0]
 
-            url = 'https://www.youtube.com/watch?v=' + video_id.replace(" ", "")
-            print(url)
-            yt = YouTube(url)
-            print(yt.title)
-            # print(yt.streams)
-            stream = yt.streams.filter(only_audio=True).first()
-            #
-            # download the file
-            out_file = stream.download(output_path='downloads')
-            #
-            # save the file
-            base, ext = os.path.splitext(out_file)
-            new_file = base + '.' + file_format
-            os.rename(out_file, new_file)
+        for line in lines:
+
+            split_line = line.split('---')
+            # Exemple => don't become dont in download pytube
+            video_name = split_line[0].strip().replace('\'', '')
+            video_id = split_line[1].strip()
+            url = 'https://www.youtube.com/watch?v=' + video_id
+
+            try:
+                yt = YouTube(url)
+                # test availability on url
+                yt.check_availability()
+            except:
+                print(f'Video {url} is unavaialable, skipping.')
+                # @todo: move video name in file exception (ex : )
+            else:
+
+                stream = yt.streams.filter(only_audio=True).first()
+                file_exist = os.path.isfile('downloads/' + video_name + '.' + file_format)
+
+                if not file_exist:
+                    # download the file
+                    out_file = stream.download(output_path='downloads')
+                    if out_file:
+                        # save the file
+                        base, ext = os.path.splitext(out_file)
+                        new_file = base + '.' + file_format
+                        print('new file => ', new_file)
+                        os.rename(out_file, new_file)
 
 
 # Search if playlist is already registered in uploads folder
@@ -245,7 +257,7 @@ def main():
                         except:
                             next_page_token = ''
 
-                        print('next page token => ', next_page_token)
+                        # print('next page token => ', next_page_token)
                         for item in tqdm(playlist_items_next['items']):
                             video_id = item['snippet']['resourceId']['videoId']
                             song = item['snippet']['title'] + " --- " + video_id
@@ -304,7 +316,8 @@ def main():
 
                 for f in settings.DOWNLOAD_VALID_FORMAT:
                     print(colorama_plus + ' - ' + f)
-                file_format = input('Please enter the format (default mp3) : ')
+                file_format = input('Please enter the format (leave blank for mp3) : ')
+
                 if file_format == '':
                     file_format = 'mp3'
 
@@ -323,10 +336,14 @@ def main():
     # Traduce a song
     elif args.test:
         print(args.test)
-        with open('uploads/Liked videos.txt', encoding="utf8") as lines:
+        url = 'https://www.youtube.com/playlist?list=PLmdNJkj26L9bt-MQdqlKJFy2yh8699QzO'
+        p = Playlist(url)
 
-            for line in reader:
-                print(line)
+        for video in p.videos:
+            print(video)
+            # video.streams.first().download()
+        for url in p.video_urls[:3]:
+            print(url)
 
     else:
         print('No argument')
