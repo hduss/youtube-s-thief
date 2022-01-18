@@ -72,7 +72,6 @@ def authenticate_youtube():
 
 # Get playlists from youtube account
 def get_playlists(build):
-
     request = build.playlists().list(
         part="snippet, contentDetails",
         mine="true",
@@ -190,10 +189,15 @@ def download_playlist(filename, file_format):
 # Set complet path
 def count_registered_song(file_path):
     counter = 0
-    with open(file_path, 'r', encoding="utf8") as lines:
-        for line in lines:
-            counter += 1
-    print(f"This is the number of lines in the file : {counter}")
+    print(f'{file_path} : search_existing_registered_playlist in count_registered_song =>'
+          f' {search_existing_registered_playlist(file_path)}')
+    if search_existing_registered_playlist(file_path):
+        with open(f'uploads/{file_path}.txt', 'r', encoding="utf8") as lines:
+            for line in lines:
+                counter += 1
+        print(f"This is the number of lines in the file : {counter}")
+        return counter
+    return False
 
 
 # Count number of video in a playlist on Youtube account
@@ -228,11 +232,16 @@ def main():
         build = authenticate_youtube()
         playlist_dictionary = {}
         playlists = get_playlists(build)
-
+        print(f'Search existing result : {search_existing_registered_playlist("Liked videos")}')
+        print((count_number_of_videos('Liked videos.txt') if search_existing_registered_playlist('Liked videos') ==
+                                                             True else 'Fonctionna pas'))
         # Add liked videos in dictionary at 1st key
         playlist_dictionary[1] = {'title': 'Liked videos', 'id': 'LL',
                                   'registered': search_existing_registered_playlist('Liked videos'),
-                                  'count': get_liked_videos(build)['pageInfo']['totalResults']}
+                                  'count_playlist': get_liked_videos(build)['pageInfo']['totalResults'],
+                                  'count_registered_file': (count_registered_song('Liked videos') if
+                                                            search_existing_registered_playlist('Liked videos') else
+                                                            0)}
 
         for ids, items in enumerate(playlists['items'], start=2):
             playlist_title = items['snippet']['localized']['title']
@@ -240,8 +249,10 @@ def main():
                 'title': playlist_title,
                 'id': items['id'],
                 'registered': search_existing_registered_playlist(playlist_title),
-                'count': items['contentDetails']['itemCount']
-
+                'count_playlist': items['contentDetails']['itemCount'],
+                'count_registered_file': (count_registered_song(playlist_title) if
+                                          search_existing_registered_playlist(playlist_title) else
+                                          0)
             }
 
         # print(json.dumps(playlist_dico_2, indent=2))
@@ -250,12 +261,20 @@ def main():
             print('List of playlists found from your account :\n')
 
             for key, value in playlist_dictionary.items():
-                registered = colorama.Fore.RED + ' (Playlist no registered localy) ' + colorama.Style.RESET_ALL
+
+                print(json.dumps(value, indent=2))
+
+                output = 'test'
                 if value['registered']:
-                    registered = colorama.Fore.GREEN + ' (Playlist allready registered localy) ' + colorama.Style.RESET_ALL
+                    output = 'test2'
+                print(f'Output {output}')
+
+                registered = colorama.Fore.RED + ' (Playlist no registered locally) ' + colorama.Style.RESET_ALL
+                if value['registered']:
+                    registered = colorama.Fore.GREEN + ' (Playlist already registered locally) ' + colorama_end
 
                 print(colorama_plus, key, '-', value['title'] + registered)
-                print(f'count => {value["count"]}')
+                # print(f'count => {value["count_playlist"]}')
 
             print(colorama_yellow)
             consent = input('Do you want download a playlist locally ? (Y/N) ')
@@ -431,16 +450,25 @@ def main():
         # video_url = video['url']
         # print(video_url)
 
-        file = 'uploads/Liked videos.txt'
-        print(count_registered_song(file))
-
-        build = authenticate_youtube()
-        playlists = get_playlists(build)
-        print(json.dumps(playlists, indent=2))
+        # file = 'uploads/Liked videos.txt'
+        # print(count_registered_song(file))
+        #
+        # build = authenticate_youtube()
+        # playlists = get_playlists(build)
+        # print(json.dumps(playlists, indent=2))
         # count_liked_playlist = get_liked_videos(build)['pageInfo']['totalResults']
         # print(json.dumps(liked_playlist['snippet'], indent=2))
 
         # print(liked_playlist)
+
+        test = False
+        dict_test = {
+            'name': 'John',
+            'lastname': 'Doe',
+            ('add' if test else None): 'je suis la' if test else None
+        }
+
+        print(dict_test)
 
 
 
