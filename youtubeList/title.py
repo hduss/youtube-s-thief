@@ -10,7 +10,7 @@ def start_program():
     print_title()
     print(colorama.Fore.MAGENTA + colorama.Style.DIM + 'Version 0.0.1.5\n')
     print('Welcome to youtube\'s thief\n')
-    print('Youtube\'s thief allows you to download part or all of your liked video on your youtube channel\n')
+    print('Youtube\'s thief allows you to download playlist from your youtube channel\n')
     print('Check python main.py --help OR python main.py -h for informations')
     print(colorama.Style.RESET_ALL)
 

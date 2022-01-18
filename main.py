@@ -128,8 +128,10 @@ def get_video_next_page(build, next_page_token):
 
 # registered song name and yoputube id in file (/uploads)
 def write_in_folder(file, song_list):
+    txt_file = file.split('/')[-1]
+    print(txt_file)
     with open(file, 'w', encoding='utf-8') as f:
-        for song in tqdm(song_list, desc='Writing song'):
+        for song in tqdm(song_list, desc=f'Writing song in {txt_file}'):
             f.write(song + "\n")
 
 
@@ -153,21 +155,17 @@ def download_playlist(filename, file_format):
             video_id = split_line[1].strip()
             url = 'https://www.youtube.com/watch?v=' + video_id
 
-
             try:
                 yt = YouTube(url)
                 yt.check_availability()  # test availability on url
                 stream = yt.streams.filter(only_audio=True).first()  # Test for age restricted
             except:
-                # print(video_name)
-                corrupted_videos.append(video_name)
-                # @todo: test get video name where restricted age or if it's possible
+                corrupted_videos.append(f'{video_name} --- {video_id}')
+                write_in_folder(f'{download_folder}/corrupted_videos.txt', corrupted_videos)
                 counter_corrupt_videos += 1
             else:
-
                 stream = yt.streams.filter(only_audio=True).first()
                 file_exist = os.path.isfile(f'{download_folder}/{video_name}.{file_format}')
-                print(f'File exists => {file_exist}')
 
                 if not file_exist:
                     # download the file
@@ -247,6 +245,7 @@ def main():
             if consent == 'Y' or consent == 'y':
 
                 playlist_id = input('Choose playlist by ID : ')
+                print(playlist_id)
                 print(colorama.Style.RESET_ALL)
 
                 # @todo : add verification for string input
@@ -281,7 +280,7 @@ def main():
                             song = item['snippet']['title'] + " --- " + video_id
                             song_list.append(song)
 
-                    write_in_folder('uploads/' + playlist_dictionary[int(playlist_id)]['title'] + '.txt', song_list)
+                    write_in_folder(f"uploads/{playlist_dictionary[int(playlist_id)]['title']}.txt", song_list)
 
                     # CLear and MAJ datas for while loop after registered a playlist
                     song_list.clear()
