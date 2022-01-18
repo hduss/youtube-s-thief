@@ -31,6 +31,8 @@ parser.add_argument('-r', '--registered', help='List your locally saved playlist
                     action="store_true")
 parser.add_argument('-t', '--test', help='Show all your youtube playlists to save them',
                     action='store_true')
+parser.add_argument('-t2', '--test2', help='Show all your youtube playlists to save them',
+                    action='store_true')
 parser.add_argument('-d', '--download', help='Download a playlist/video from his ID or from url',
                     nargs='?', const="download_playlist")
 parser.add_argument('-c', '--cut', help='cut a video in several song')
@@ -51,11 +53,8 @@ def authenticate_youtube():
     # if there are no (valid) credentials available, let the user log in.
     if not credentials or not credentials.valid:
         if credentials and credentials.expired and credentials.refresh_token:
-            print('passe la')
             credentials.refresh(Request())
-            print(credentials)
         else:
-            print('pase ici')
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials/client_secrets.json',
                 scopes=['https://www.googleapis.com/auth/youtube.readonly']
@@ -136,7 +135,6 @@ def write_in_folder(file, song_list):
 
 # Downloading a playlist from .txt file
 def download_playlist(filename, file_format):
-    print('Filename in function => ', filename)
     with open('uploads/' + filename, encoding="utf8") as lines:
 
         folder_name = filename.split('.txt')[0]
@@ -168,9 +166,11 @@ def download_playlist(filename, file_format):
                         base, ext = os.path.splitext(out_file)
                         new_file = base + '.' + file_format
                         os.rename(out_file, new_file)
-                        print(colorama_plus + f' New file {video_name}.{file_format} is saved')
+                        print(colorama_plus + f' File : {video_name}.{file_format} {colorama.Fore.GREEN} saved !'
+                                              f'{colorama_end}')
                 else:
-                    print(colorama_less + f' File {video_name}.{file_format} already exist')
+                    print(colorama_less + f' File {video_name}.{file_format} {colorama.Fore.YELLOW} already exist '
+                                          f'{colorama_end}')
 
         print(f'{counter_corrupt_videos} videos is corrupted')
 
@@ -336,6 +336,28 @@ def main():
     # Cut long videos
     elif args.cut:
         print(args.cut)
+
+    elif args.test2:
+        url = 'https://www.youtube.com/watch?v=uFnlCzgThS8&ab_channel=ValdSullyvan'
+        url2 = 'https://www.youtube.com/watch?v=bxWaWiaQz6w&ab_channel=Yotozz'
+
+        yt = YouTube(url2)
+        # Get video by mime_type
+        print(yt.streams.filter(mime_type='video/webm'))
+
+        # print(f'Bypasse age {yt.bypass_age_gate()}')
+        # yt.check_availability()  # test availability on url
+        #
+        # print(json.dumps(yt.streams))
+        # stream = yt.streams.filter(only_audio=True).first()
+        # # download the file
+        # try:
+        #     print('je suis try')
+        #     # out_file = stream.download(output_path='downloads/' + folder_name)
+        # except:
+        #     print('probleme')
+
+
 
     # Traduce a song
     elif args.test:
