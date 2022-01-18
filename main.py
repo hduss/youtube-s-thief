@@ -139,6 +139,8 @@ def download_playlist(filename, file_format):
 
         folder_name = filename.split('.txt')[0]
         counter_corrupt_videos = 0
+        corrupted_videos = []
+        stream = False
 
         for line in lines:
 
@@ -151,7 +153,11 @@ def download_playlist(filename, file_format):
             try:
                 yt = YouTube(url)
                 yt.check_availability()  # test availability on url
+                stream = yt.streams.filter(only_audio=True).first()
             except:
+                # print(video_name)
+                corrupted_videos.append(video_name)
+                # @todo: test get video name where restricted age or if it's possible
                 counter_corrupt_videos += 1
             else:
 
@@ -172,7 +178,8 @@ def download_playlist(filename, file_format):
                     print(colorama_less + f' File {video_name}.{file_format} {colorama.Fore.YELLOW} already exist '
                                           f'{colorama_end}')
 
-        print(f'{counter_corrupt_videos} videos is corrupted')
+        print(f'{counter_corrupt_videos} videos corrupted')
+        print('Corrupted videos => ', corrupted_videos)
 
 
 # Search if playlist is already registered in uploads folder
@@ -340,10 +347,20 @@ def main():
     elif args.test2:
         url = 'https://www.youtube.com/watch?v=uFnlCzgThS8&ab_channel=ValdSullyvan'
         url2 = 'https://www.youtube.com/watch?v=bxWaWiaQz6w&ab_channel=Yotozz'
+        print('je suis args test 2')
+        try:
 
-        yt = YouTube(url2)
-        # Get video by mime_type
-        print(yt.streams.filter(mime_type='video/webm'))
+            yt = YouTube(url2)
+            # Get video by mime_type
+            available = yt.check_availability()
+            print(available)
+            stream = yt.streams.filter(only_audio=True).first()
+
+            # print(available_video)
+        except:
+            print('je suis except')
+        else:
+            print('ici')
 
         # print(f'Bypasse age {yt.bypass_age_gate()}')
         # yt.check_availability()  # test availability on url
