@@ -20,6 +20,7 @@ colorama.init()
 colorama_plus = '[' + colorama.Fore.GREEN + '+' + colorama.Style.RESET_ALL + ']'
 colorama_plus_yellow = '[' + colorama.Fore.YELLOW + '+' + colorama.Style.RESET_ALL + ']'
 colorama_less = '[' + colorama.Fore.RED + '-' + colorama.Style.RESET_ALL + ']'
+colorama_less_yellow = '[' + colorama.Fore.YELLOW + '-' + colorama.Style.RESET_ALL + ']'
 colorama_yellow = colorama.Fore.YELLOW
 colorama_end = colorama.Style.RESET_ALL
 
@@ -71,10 +72,11 @@ def authenticate_youtube():
 
 # Get playlists from youtube account
 def get_playlists(build):
+
     request = build.playlists().list(
-        part="snippet",
+        part="snippet, contentDetails",
         mine="true",
-        maxResults=50
+        maxResults=50,
     )
     resp = request.execute()  # Query execution
     return resp
@@ -129,7 +131,6 @@ def get_video_next_page(build, next_page_token):
 # registered song name and yoputube id in file (/uploads)
 def write_in_folder(file, song_list):
     txt_file = file.split('/')[-1]
-    print(txt_file)
     with open(file, 'w', encoding='utf-8') as f:
         for song in tqdm(song_list, desc=f'Writing song in {txt_file}'):
             f.write(song + "\n")
@@ -144,14 +145,12 @@ def download_playlist(filename, file_format):
         corrupted_videos = []
         stream = False
         download_folder = f'downloads/{folder_name}/{file_format}'
-        print(f'download folder => {download_folder}')
 
         for line in lines:
 
             split_line = line.split('---')
             # Exemple => don't become dont in download pytube
             video_name = split_line[0].strip().replace('\'', '').replace('.', '')
-            print(f'Video name is {video_name}')
             video_id = split_line[1].strip()
             url = 'https://www.youtube.com/watch?v=' + video_id
 
@@ -177,14 +176,29 @@ def download_playlist(filename, file_format):
                         base, ext = os.path.splitext(out_file)
                         new_file = base + '.' + file_format
                         os.rename(out_file, new_file)
-                        print(colorama_plus + f' File : {video_name}.{file_format} {colorama.Fore.GREEN} saved !'
-                                              f'{colorama_end}')
+                        print(
+                            colorama_plus + f' File : {video_name}.{file_format} {colorama.Fore.GREEN} saved !{colorama_end}')
                 else:
-                    print(colorama_less + f' File {video_name}.{file_format} {colorama.Fore.YELLOW} already exist '
-                                          f'{colorama_end}')
+                    print(colorama_less_yellow + f' File {video_name}.{file_format} {colorama.Fore.YELLOW} already '
+                                                 f'exist {colorama_end}')
 
         print(f'{counter_corrupt_videos} videos corrupted')
         print('Corrupted videos => ', corrupted_videos)
+
+
+# Counts the number of lines of the recorded file compared to the number of songs in the Youtube playlist
+# Set complet path
+def count_registered_song(file_path):
+    counter = 0
+    with open(file_path, 'r', encoding="utf8") as lines:
+        for line in lines:
+            counter += 1
+    print(f"This is the number of lines in the file : {counter}")
+
+
+# Count number of video in a playlist on Youtube account
+def count_number_of_videos(playlist):
+    print('count_number_of_videos function')
 
 
 # Search if playlist is already registered in uploads folder
@@ -217,14 +231,17 @@ def main():
 
         # Add liked videos in dictionary at 1st key
         playlist_dictionary[1] = {'title': 'Liked videos', 'id': 'LL',
-                                  'registered': search_existing_registered_playlist('Liked videos')}
+                                  'registered': search_existing_registered_playlist('Liked videos'),
+                                  'count': get_liked_videos(build)['pageInfo']['totalResults']}
 
         for ids, items in enumerate(playlists['items'], start=2):
             playlist_title = items['snippet']['localized']['title']
             playlist_dictionary[ids] = {
                 'title': playlist_title,
                 'id': items['id'],
-                'registered': search_existing_registered_playlist(playlist_title)
+                'registered': search_existing_registered_playlist(playlist_title),
+                'count': items['contentDetails']['itemCount']
+
             }
 
         # print(json.dumps(playlist_dico_2, indent=2))
@@ -238,6 +255,7 @@ def main():
                     registered = colorama.Fore.GREEN + ' (Playlist allready registered localy) ' + colorama.Style.RESET_ALL
 
                 print(colorama_plus, key, '-', value['title'] + registered)
+                print(f'count => {value["count"]}')
 
             print(colorama_yellow)
             consent = input('Do you want download a playlist locally ? (Y/N) ')
@@ -326,30 +344,34 @@ def main():
             # @todo : add verification for string input
             playlist_id = input('\nChoose a file to download by ID (Q to quit) : ')
 
-            if playlist_id == 'q' or playlist_id == 'Q':
-                print('End of program ...')
+            print(len(files_new))
+            print(1 <= int(playlist_id) <= len(files_new))
+
+            if 1 <= int(playlist_id) <= len(files_new):
+                selected_file = files_new[int(playlist_id)]
+                print('File selected : ', selected_file['title'])
+
+                while True:
+
+                    print('Format available : ')
+                    for f in settings.DOWNLOAD_VALID_FORMAT:
+                        print(colorama_plus + ' - ' + f)
+                    file_format = input('Please enter the format (leave blank for mp3) : ')
+
+                    if file_format == '':
+                        file_format = 'mp3'
+
+                    if file_format in settings.DOWNLOAD_VALID_FORMAT:
+                        download_playlist(selected_file['title'], file_format)
+                        break
+
+            elif playlist_id == 'q' or playlist_id == 'Q':
+                print('End of program quit...')
                 exit()
 
-            selected_file = files_new[int(playlist_id)]
-            print('File selected : ', selected_file['title'])
-
-            while True:
-                print('Format available : ')
-
-                for f in settings.DOWNLOAD_VALID_FORMAT:
-                    print(colorama_plus + ' - ' + f)
-                file_format = input('Please enter the format (leave blank for mp3) : ')
-
-                if file_format == '':
-                    file_format = 'mp3'
-
-                if file_format in settings.DOWNLOAD_VALID_FORMAT:
-                    download_playlist(selected_file['title'], file_format)
-                    break
-
-
-
-
+            else:
+                print('End of program else ...')
+                exit()
 
     # Cut long videos
     elif args.cut:
@@ -389,25 +411,43 @@ def main():
 
     # Traduce a song
     elif args.test:
-        print(args.test)
-        ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+        # print(args.test)
+        # ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+        #
+        # with ydl:
+        #     result = ydl.extract_info(
+        #         'https://www.youtube.com/watch?v=RLJnsU5VlAY&ab_channel=2nOfficiel',
+        #         download=True  # We just want to extract the info
+        #     )
+        #
+        # if 'entries' in result:
+        #     # Can be a playlist or a list of videos
+        #     video = result['entries'][0]
+        # else:
+        #     # Just a video
+        #     video = result
+        #
+        # print(video)
+        # video_url = video['url']
+        # print(video_url)
 
-        with ydl:
-            result = ydl.extract_info(
-                'https://www.youtube.com/watch?v=RLJnsU5VlAY&ab_channel=2nOfficiel',
-                download=True  # We just want to extract the info
-            )
+        file = 'uploads/Liked videos.txt'
+        print(count_registered_song(file))
 
-        if 'entries' in result:
-            # Can be a playlist or a list of videos
-            video = result['entries'][0]
-        else:
-            # Just a video
-            video = result
+        build = authenticate_youtube()
+        playlists = get_playlists(build)
+        print(json.dumps(playlists, indent=2))
+        # count_liked_playlist = get_liked_videos(build)['pageInfo']['totalResults']
+        # print(json.dumps(liked_playlist['snippet'], indent=2))
 
-        print(video)
-        video_url = video['url']
-        print(video_url)
+        # print(liked_playlist)
+
+
+
+
+
+
+
 
     else:
         print('No argument')
