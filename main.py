@@ -141,19 +141,23 @@ def download_playlist(filename, file_format):
         counter_corrupt_videos = 0
         corrupted_videos = []
         stream = False
+        download_folder = f'downloads/{folder_name}/{file_format}'
+        print(f'download folder => {download_folder}')
 
         for line in lines:
 
             split_line = line.split('---')
             # Exemple => don't become dont in download pytube
-            video_name = split_line[0].strip().replace('\'', '')
+            video_name = split_line[0].strip().replace('\'', '').replace('.', '')
+            print(f'Video name is {video_name}')
             video_id = split_line[1].strip()
             url = 'https://www.youtube.com/watch?v=' + video_id
+
 
             try:
                 yt = YouTube(url)
                 yt.check_availability()  # test availability on url
-                stream = yt.streams.filter(only_audio=True).first()
+                stream = yt.streams.filter(only_audio=True).first()  # Test for age restricted
             except:
                 # print(video_name)
                 corrupted_videos.append(video_name)
@@ -162,11 +166,14 @@ def download_playlist(filename, file_format):
             else:
 
                 stream = yt.streams.filter(only_audio=True).first()
-                file_exist = os.path.isfile('downloads/' + folder_name + '/' + video_name + '.' + file_format)
+                file_exist = os.path.isfile(f'{download_folder}/{video_name}.{file_format}')
+                print(f'File exists => {file_exist}')
 
                 if not file_exist:
                     # download the file
-                    out_file = stream.download(output_path='downloads/' + folder_name)
+                    # out_file = stream.download(output_path='downloads/' + folder_name)
+                    out_file = stream.download(output_path=download_folder)
+
                     if out_file:
                         # save the file
                         base, ext = os.path.splitext(out_file)
@@ -318,7 +325,12 @@ def main():
                 print(colorama_plus, key, '-', file['title'])
 
             # @todo : add verification for string input
-            playlist_id = input('\nChoose a file to download (by ID) : ')
+            playlist_id = input('\nChoose a file to download by ID (Q to quit) : ')
+
+            if playlist_id == 'q' or playlist_id == 'Q':
+                print('End of program ...')
+                exit()
+
             selected_file = files_new[int(playlist_id)]
             print('File selected : ', selected_file['title'])
 
