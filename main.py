@@ -291,32 +291,12 @@ def main():
             print('List of playlists found from your account :\n')
 
             for key, value in playlist_dictionary.items():
-
                 print(display_output_playlist(key, value))
 
-                # # @todo: Format output display
-                # output = f'{colorama_less} {key} - {value["title"]} (Playlist no registered locally)' \
-                #          f' {colorama_end}'
-                # if value['registered']:
-                #     output = f'{colorama_less} {key} - {value["title"]} (Playlist registered locally (' \
-                #              f'{value["count_registered_file"]}/{value["count_playlist"]}))' \
-                #              f' {colorama_end}'
-                #
-                # registered = colorama.Fore.RED + ' (Playlist no registered locally) ' + colorama.Style.RESET_ALL
-                # if value['registered']:
-                #     registered = colorama.Fore.GREEN + ' (Playlist already registered locally) ' + colorama_end
-                # print(output)
-                # print(colorama_plus, key, '-', value['title'] + registered)
-                # # print(f'count => {value["count_playlist"]}')
-
-            print(colorama_yellow)
-            consent = input(f'{colorama_yellow}Do you want download a playlist locally ? (Y/N){colorama_end} : ')
-
+            consent = input(f'\n{colorama_yellow}Do you want download a playlist locally ? (Y/N){colorama_end} : ')
             if consent == 'Y' or consent == 'y':
 
                 playlist_id = input(f'{colorama_yellow}Choose playlist by ID : {colorama_end}')
-                print(playlist_id)
-                print(colorama.Style.RESET_ALL)
 
                 # @todo : add verification for string input
                 if 1 <= int(playlist_id) <= len(playlist_dictionary):
@@ -354,6 +334,7 @@ def main():
 
                     # CLear and MAJ datas for while loop after registered a playlist
                     song_list.clear()
+                    playlist_dictionary[int(playlist_id)]['count_registered_file'] = count_registered_song(playlist_dictionary[int(playlist_id)]['title'])
                     if search_existing_registered_playlist(playlist_dictionary[int(playlist_id)]['title']):
                         playlist_dictionary[int(playlist_id)]['registered'] = True
 
