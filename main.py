@@ -9,6 +9,7 @@ import colorama
 import argparse
 import youtube_dl
 import google.oauth2.credentials
+import pytube.exceptions
 from pytube import Playlist, YouTube
 from tqdm import tqdm
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -19,13 +20,14 @@ from googleapiclient.discovery import build
 colorama.init()
 colorama_green = colorama.Fore.GREEN
 colorama_red = colorama.Fore.RED
-colorama_warning = '[' + colorama.Fore.YELLOW + '!' + colorama.Style.RESET_ALL + ']'
-colorama_plus = '[' + colorama.Fore.GREEN + '+' + colorama.Style.RESET_ALL + ']'
-colorama_plus_yellow = '[' + colorama.Fore.YELLOW + '+' + colorama.Style.RESET_ALL + ']'
-colorama_less = '[' + colorama.Fore.RED + '-' + colorama.Style.RESET_ALL + ']'
-colorama_less_yellow = '[' + colorama.Fore.YELLOW + '-' + colorama.Style.RESET_ALL + ']'
 colorama_yellow = colorama.Fore.YELLOW
 colorama_end = colorama.Style.RESET_ALL
+
+colorama_plus = f'[{colorama_green}+{colorama_end}]'
+colorama_less = f'[{colorama_red}+{colorama_end}]'
+colorama_warning = f'[{colorama_yellow}!{colorama_end}]'
+colorama_less_yellow = f'[{colorama_yellow}-{colorama_end}]'
+
 
 # Arguments
 parser = argparse.ArgumentParser()
@@ -41,7 +43,7 @@ parser.add_argument('-d', '--download', help='Download a playlist/video from his
                     nargs='?', const="download_playlist")
 parser.add_argument('-c', '--cut', help='cut a video in several song')
 args = parser.parse_args()
-print(args)
+print(f'Arguments list : {args}')
 
 
 # Return build of API if authenticate OK
@@ -140,7 +142,11 @@ def write_in_folder(file, song_list):
 
 # Downloading a playlist from .txt file
 def download_playlist(filename, file_format):
+    print(f'Filename => {filename}')
+    print(f'Filename => {file_format}')
+
     with open('uploads/' + filename, encoding="utf8") as lines:
+
 
         folder_name = filename.split('.txt')[0]
         counter_corrupt_videos = 0
@@ -149,22 +155,26 @@ def download_playlist(filename, file_format):
         download_folder = f'downloads/{folder_name}/{file_format}'
 
         for line in lines:
+            print(line)
 
             split_line = line.split('---')
             # Exemple => don't become dont in download pytube
             video_name = split_line[0].strip().replace('\'', '').replace('.', '')
             video_id = split_line[1].strip()
             url = 'https://www.youtube.com/watch?v=' + video_id
+            print(f'URL => {url}')
 
             try:
                 yt = YouTube(url)
-                yt.check_availability()  # test availability on url
-                stream = yt.streams.filter(only_audio=True).first()  # Test for age restricted
+                # yt.check_availability()  # test availability on url
+                # stream = yt.streams.filter(only_audio=True).first()  # Test for age restricted
             except:
                 corrupted_videos.append(f'{video_name} --- {video_id}')
                 write_in_folder(f'{download_folder}/corrupted_videos.txt', corrupted_videos)
                 counter_corrupt_videos += 1
+
             else:
+                yt = YouTube(url)
                 stream = yt.streams.filter(only_audio=True).first()
                 file_exist = os.path.isfile(f'{download_folder}/{video_name}.{file_format}')
 
@@ -338,7 +348,6 @@ def main():
                     if search_existing_registered_playlist(playlist_dictionary[int(playlist_id)]['title']):
                         playlist_dictionary[int(playlist_id)]['registered'] = True
 
-
                 else:
                     print(colorama_less + colorama.Fore.RED + ' Error : Value ' + playlist_id + ' is not valid' +
                           colorama_end + '\n')
@@ -376,10 +385,7 @@ def main():
                 print(colorama_plus, key, '-', file['title'])
 
             # @todo : add verification for string input
-            playlist_id = input('\nChoose a file to download by ID (Q to quit) : ')
-
-            print(len(files_new))
-            print(1 <= int(playlist_id) <= len(files_new))
+            playlist_id = input(f'\n{colorama_yellow}Choose a file to download by ID (Q to quit) : {colorama_end}')
 
             if 1 <= int(playlist_id) <= len(files_new):
                 selected_file = files_new[int(playlist_id)]
@@ -414,20 +420,49 @@ def main():
     elif args.test2:
         url = 'https://www.youtube.com/watch?v=uFnlCzgThS8&ab_channel=ValdSullyvan'
         url2 = 'https://www.youtube.com/watch?v=bxWaWiaQz6w&ab_channel=Yotozz'
+        url3 = 'https://www.youtube.com/watch?v=tO4dxvguQDk'
+        url4 = 'https://www.youtube.com/watch?v=HqJ1qP05Si0&ab_channel=Ninho'
         print('je suis args test 2')
+
+        yt = YouTube(url)
+        print(yt.title)
         try:
+            streams = yt.streams()
+        except pytube.exceptions.AgeRestrictedError as restricted:
+            print(f'restricted => {restricted}')
+            print('age restricted')
+        except pytube.exceptions.VideoUnavailable:
+            print('unavailable')
+        except pytube.exceptions.RegexMatchError:
+            print('regex')
 
-            yt = YouTube(url2)
-            # Get video by mime_type
-            available = yt.check_availability()
-            print(available)
-            stream = yt.streams.filter(only_audio=True).first()
 
-            # print(available_video)
-        except:
-            print('je suis except')
+        except pytube.exceptions.VideoPrivate:
+            print('private video')
+        except pytube.exceptions.VideoUnavailable:
+            print('test3333')
         else:
-            print('ici')
+            print('je passe ici')
+
+        # yt = YouTube(url2)
+        # print(yt.title)
+        # print(yt.streams())
+
+
+        # try:
+        #
+        #     yt = YouTube(url1)
+        #     # print(yt)
+        #     # Get video by mime_type
+        #     # available = yt.check_availability()
+        #     # print(available)
+        #     # stream = yt.streams.filter(only_audio=True).first()
+        #
+        #     # print(available_video)
+        # except:
+        #     print('je suis except')
+        # else:
+        #     print('ici')
 
         # print(f'Bypasse age {yt.bypass_age_gate()}')
         # yt.check_availability()  # test availability on url
