@@ -17,6 +17,9 @@ from googleapiclient.discovery import build
 
 # Colorama init and variables
 colorama.init()
+colorama_green = colorama.Fore.GREEN
+colorama_red = colorama.Fore.RED
+colorama_warning = '[' + colorama.Fore.YELLOW + '!' + colorama.Style.RESET_ALL + ']'
 colorama_plus = '[' + colorama.Fore.GREEN + '+' + colorama.Style.RESET_ALL + ']'
 colorama_plus_yellow = '[' + colorama.Fore.YELLOW + '+' + colorama.Style.RESET_ALL + ']'
 colorama_less = '[' + colorama.Fore.RED + '-' + colorama.Style.RESET_ALL + ']'
@@ -218,6 +221,33 @@ def compare_nbr_items_playlists():
     print('compare')
 
 
+def display_output_playlist(key, value):
+
+    output_string = f'{colorama_less} ' \
+                    f'{key} - {value["title"]} ' \
+                    f': {colorama_red}Playlist not registered locally ({value["count_registered_file"]}' \
+                    f'/{value["count_playlist"]})' \
+                    f' {colorama_end}'
+
+    if value['registered']:
+        if value['count_playlist'] == value['count_registered_file']:
+
+            output_string = f'{colorama_plus} ' \
+                     f'{key} - {value["title"]} ' \
+                     f': {colorama_green}Playlist registered locally ({value["count_registered_file"]}' \
+                     f'/{value["count_playlist"]})' \
+                     f' {colorama_end}'
+        elif value['count_playlist'] != value['count_registered_file']:
+
+            output_string = f'{colorama_warning} ' \
+                     f'{key} - {value["title"]} ' \
+                     f': {colorama_yellow}Playlist registered locally ({value["count_registered_file"]}' \
+                     f'/{value["count_playlist"]})' \
+                     f' {colorama_end}'
+
+    return output_string
+
+
 # Main function
 def main():
     nbr_pages = 0
@@ -262,26 +292,29 @@ def main():
 
             for key, value in playlist_dictionary.items():
 
-                print(json.dumps(value, indent=2))
-                # @todo: Format output display
-                output = 'test'
-                if value['registered']:
-                    output = f'{colorama_plus} {key} - {value["title"]} Playlist registered locally ({})'
-                print(f'Output {output}')
+                print(display_output_playlist(key, value))
 
-                registered = colorama.Fore.RED + ' (Playlist no registered locally) ' + colorama.Style.RESET_ALL
-                if value['registered']:
-                    registered = colorama.Fore.GREEN + ' (Playlist already registered locally) ' + colorama_end
-
-                print(colorama_plus, key, '-', value['title'] + registered)
-                # print(f'count => {value["count_playlist"]}')
+                # # @todo: Format output display
+                # output = f'{colorama_less} {key} - {value["title"]} (Playlist no registered locally)' \
+                #          f' {colorama_end}'
+                # if value['registered']:
+                #     output = f'{colorama_less} {key} - {value["title"]} (Playlist registered locally (' \
+                #              f'{value["count_registered_file"]}/{value["count_playlist"]}))' \
+                #              f' {colorama_end}'
+                #
+                # registered = colorama.Fore.RED + ' (Playlist no registered locally) ' + colorama.Style.RESET_ALL
+                # if value['registered']:
+                #     registered = colorama.Fore.GREEN + ' (Playlist already registered locally) ' + colorama_end
+                # print(output)
+                # print(colorama_plus, key, '-', value['title'] + registered)
+                # # print(f'count => {value["count_playlist"]}')
 
             print(colorama_yellow)
-            consent = input('Do you want download a playlist locally ? (Y/N) ')
+            consent = input(f'{colorama_yellow}Do you want download a playlist locally ? (Y/N){colorama_end} : ')
 
             if consent == 'Y' or consent == 'y':
 
-                playlist_id = input('Choose playlist by ID : ')
+                playlist_id = input(f'{colorama_yellow}Choose playlist by ID : {colorama_end}')
                 print(playlist_id)
                 print(colorama.Style.RESET_ALL)
 
@@ -323,6 +356,7 @@ def main():
                     song_list.clear()
                     if search_existing_registered_playlist(playlist_dictionary[int(playlist_id)]['title']):
                         playlist_dictionary[int(playlist_id)]['registered'] = True
+
 
                 else:
                     print(colorama_less + colorama.Fore.RED + ' Error : Value ' + playlist_id + ' is not valid' +
@@ -469,13 +503,6 @@ def main():
         }
 
         print(dict_test)
-
-
-
-
-
-
-
 
     else:
         print('No argument')
