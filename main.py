@@ -1,6 +1,7 @@
 # API client library
 import youtubeList.title as title
 import youtubeList.settings as settings
+import youtubeList.YoutubeApi as tesApi
 import os
 import pickle
 import requests
@@ -15,6 +16,8 @@ from tqdm import tqdm
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+
+from youtubeList.inc.YoutubeApi import YoutubeApi as testApi
 
 # Colorama init and variables
 colorama.init()
@@ -44,6 +47,8 @@ parser.add_argument('-d', '--download', help='Download a playlist/video from his
 parser.add_argument('-c', '--cut', help='cut a video in several song')
 args = parser.parse_args()
 print(f'Arguments list : {args}')
+
+
 
 
 # Return build of API if authenticate OK
@@ -140,6 +145,57 @@ def write_in_folder(file, song_list):
             f.write(song + "\n")
 
 
+
+def download_playlist_youtube_dl(filename, file_format):
+    print(f'Filename => {filename}')
+    print(f'Filename => {file_format}')
+    with open('uploads/' + filename, encoding="utf8") as lines:
+
+
+        for line in lines:
+            print(line)
+
+            split_line = line.split('---')
+            # Exemple => don't become dont in download pytube
+            video_name = split_line[0].strip().replace('\'', '').replace('.', '')
+            video_id = split_line[1].strip()
+            url = 'https://www.youtube.com/watch?v=' + video_id
+
+            # ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+            class MyLogger(object):
+                def debug(self, msg):
+                    pass
+
+                def warning(self, msg):
+                    pass
+
+                def error(self, msg):
+                    print(msg)
+
+            def my_hook(d):
+                if d['status'] == 'finished':
+                    print('Done downloading, now converting ...')
+
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+
+            }
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+
+            # with ydl:
+            #     result = ydl.extract_info(
+            #         url,
+            #         download=True  # We just want to extract the info
+            #     )
+
+
+
 # Downloading a playlist from .txt file
 def download_playlist(filename, file_format):
     print(f'Filename => {filename}')
@@ -166,8 +222,8 @@ def download_playlist(filename, file_format):
 
             try:
                 yt = YouTube(url)
-                # yt.check_availability()  # test availability on url
-                # stream = yt.streams.filter(only_audio=True).first()  # Test for age restricted
+                yt.check_availability()  # test availability on url
+                stream = yt.streams.filter(only_audio=True).first()  # Test for age restricted
             except:
                 corrupted_videos.append(f'{video_name} --- {video_id}')
                 write_in_folder(f'{download_folder}/corrupted_videos.txt', corrupted_videos)
@@ -206,7 +262,7 @@ def count_registered_song(file_path):
         with open(f'uploads/{file_path}.txt', 'r', encoding="utf8") as lines:
             for line in lines:
                 counter += 1
-        print(f"This is the number of lines in the file : {counter}")
+        # print(f"This is the number of lines in the file : {counter}")
         return counter
 
     return False
@@ -263,6 +319,10 @@ def main():
     nbr_pages = 0
     song_list = []
     title.start_program()
+
+    # yt_api = testApi()
+    # print(yt_api)
+    # print(yt_api.authenticate_youtube())
 
     # Display playlists from youtube account
     if args.list:
@@ -402,6 +462,7 @@ def main():
                         file_format = 'mp3'
 
                     if file_format in settings.DOWNLOAD_VALID_FORMAT:
+                        # download_playlist_youtube_dl(selected_file['title'], file_format)
                         download_playlist(selected_file['title'], file_format)
                         break
 
@@ -480,7 +541,7 @@ def main():
 
     # Traduce a song
     elif args.test:
-        # print(args.test)
+        print(args.test)
         # ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
         #
         # with ydl:
@@ -511,14 +572,14 @@ def main():
 
         # print(liked_playlist)
 
-        test = False
-        dict_test = {
-            'name': 'John',
-            'lastname': 'Doe',
-            ('add' if test else None): 'je suis la' if test else None
-        }
+        yt_api = testApi()
+        build = yt_api.authenticate_youtube()
+        playlists = yt_api.get_playlists()
+        print(build)
+        print(f'PLaylists => {playlists}')
 
-        print(dict_test)
+
+
 
     else:
         print('No argument')
