@@ -130,9 +130,7 @@ class YoutubeApi:
 
             # If there is more than 50 videos in the playlist
             while next_page_token != '':
-
                 playlist_items_next = self.get_playlist_items_next(playlist_yt_id, next_page_token)
-
                 try:
                     next_page_token = playlist_items_next['nextPageToken']
                 except:
@@ -142,6 +140,7 @@ class YoutubeApi:
                     video_id = item['snippet']['resourceId']['videoId']
                     song = item['snippet']['title'] + " --- " + video_id
                     self._song_list.append(song)
+
         return self._song_list
 
 
@@ -155,7 +154,7 @@ class YoutubeApi:
         return resp
 
 
-    ## Setter and Getters
+    ## Getters and Setters
 
     def get_song_list(self):
         return self._song_list

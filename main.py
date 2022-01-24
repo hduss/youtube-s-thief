@@ -8,6 +8,7 @@ import pytube.exceptions
 from pytube import Playlist, YouTube
 from youtubeList.inc.YoutubeApi import YoutubeApi
 from youtubeList.inc.Tools import Tools
+from youtubeList.inc.Downloader import Downloader
 
 # Colorama init and variables
 colorama.init()
@@ -29,7 +30,7 @@ parser.add_argument('-l', '--list', help='Show all your youtube playlists to sav
 parser.add_argument('-r', '--registered', help='List your locally saved playlists to then download the videos',
                     action="store_true")
 parser.add_argument('-t', '--test', help='Argument available for tests',
-                    action='store_true')
+                    nargs='?', const="download_playlist")
 parser.add_argument('-t2', '--test2', help='Second argument available for tests',
                     action='store_true')
 parser.add_argument('-d', '--download', help='Download a playlist/video from his ID or from url',
@@ -216,7 +217,7 @@ def main():
             for key, value in playlist_dict.items():
                 print(display_output_playlist(key, value))
 
-            consent = input(f'\n{colorama_yellow}Do you want download a playlist locally ? (Y/N){colorama_end} : ')
+            consent = input(f'\n{colorama_yellow}Do you want registered a playlist locally ? (Y/N){colorama_end} : ')
             if consent == 'Y' or consent == 'y':
 
                 playlist_id = input(f'{colorama_yellow}Choose playlist by ID : {colorama_end}')
@@ -250,12 +251,12 @@ def main():
     # Download directly from an ID or url
     elif args.download:
 
+
         if args.download != 'download_playlist':
             print('URL is required here')
             # r = requests.get(args.download)
             # print(r)
         else:
-
             files = os.listdir("uploads")
             files_new = {}
             i = 0
@@ -266,7 +267,7 @@ def main():
                     j = j + 1
                 i = i + 1
 
-            print('List of playlists registered locally :' + '\n')
+            print(f'List of playlists registered locally : \n')
             for key, file in files_new.items():
                 print(colorama_plus, key, '-', file['title'])
 
@@ -342,6 +343,17 @@ def main():
         # print(json.dumps(liked_playlist['snippet'], indent=2))
 
         # print(liked_playlist)
+
+
+        downloader = Downloader(args.test)
+        downloader.download_playlist()
+        print(f'Downloader object => {downloader}')
+
+
+
+
+
+
 
     elif args.test2:
         url = 'https://www.youtube.com/watch?v=uFnlCzgThS8&ab_channel=ValdSullyvan'
