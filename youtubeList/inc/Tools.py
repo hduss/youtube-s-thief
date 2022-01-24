@@ -1,4 +1,5 @@
 import os
+
 from tqdm import tqdm
 
 class Tools:
@@ -7,7 +8,7 @@ class Tools:
         print('__init__ Tools')
 
 
-    #Search if the playlist alreaddy exist in uploads folder
+    #Search if the playlist already exist in uploads folder
     def search_existing_registered_playlist(self, playlist_name):
         return os.path.isfile('uploads/' + playlist_name + '.txt')
 
@@ -28,7 +29,7 @@ class Tools:
 
     # registered song name and her youtube id in a txt file
     @staticmethod
-    def write_in_folder(self, file, song_list):
+    def write_in_folder(file, song_list):
         txt_file = file.split('/')[-1]
         with open(file, 'w', encoding='utf-8') as f:
             for song in tqdm(song_list, desc=f'Writing song in {txt_file}'):

@@ -1,5 +1,6 @@
 import os
 import pickle
+from typing import Any
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -10,21 +11,24 @@ from youtubeList.inc.Tools import Tools
 class YoutubeApi:
 
     liked_videos = 'Liked videos'
-    playlist_dictionary = {}
-    song_list = []
+    # playlist_dictionary = {}
+    # song_list = []
+
+
     # tools = Tools()
 
     # Init call authenticate_youtube to log user directly
     def __init__(self):
         print('Je suis __init__')
-        self.build = self.authenticate_youtube(self)
+        self.build = self.authenticate_youtube()
         self.Tools = Tools()
-        # self.__song_list = []
+        self._song_list = []
+        self._playlist_dictionary = {}
 
 
     # Authentication to API && credentials management
     @staticmethod
-    def authenticate_youtube(self):
+    def authenticate_youtube():
         # print('je suis authenticate_youtube')
         api_service_name = "youtube"
         api_version = "v3"
@@ -57,7 +61,7 @@ class YoutubeApi:
     def create_playlists_dict(self, playlists):
 
         # Add liked videos in dictionary at 1st key
-        self.playlist_dictionary[1] = {
+        self._playlist_dictionary[1] = {
             'title': 'Liked videos',
             'id': 'LL',
             'registered': self.Tools.search_existing_registered_playlist(self.liked_videos),
@@ -69,7 +73,7 @@ class YoutubeApi:
         for ids, items in enumerate(playlists['items'], start=2):
             playlist_title = items['snippet']['localized']['title']
 
-            self.playlist_dictionary[ids] = {
+            self._playlist_dictionary[ids] = {
                 'title': playlist_title,
                 'id': items['id'],
                 'registered': self.Tools.search_existing_registered_playlist(playlist_title),
@@ -79,7 +83,7 @@ class YoutubeApi:
                         playlist_title) else 0)
             }
 
-        return self.playlist_dictionary
+        return self._playlist_dictionary
 
 
     # Get first page result of a playlist by his ID
@@ -118,10 +122,8 @@ class YoutubeApi:
 
     # Get all items from a playlist from his ID
     def get_all_items(self, playlist_id):
-        print('get_all_items')
-        print(f'Plyalist_id => {playlist_id} ')
 
-        playlist_yt_id = self.playlist_dictionary[int(playlist_id)]['id']
+        playlist_yt_id = self._playlist_dictionary[int(playlist_id)]['id']
         playlists_items_first = self.get_playlists_items(playlist_yt_id)
 
         print(f'playlist_yt_id: {playlist_yt_id}')
@@ -134,7 +136,7 @@ class YoutubeApi:
         for item in playlists_items_first['items']:
             video_id = item['snippet']['resourceId']['videoId']
             song = item['snippet']['title'] + " --- " + video_id
-            self.song_list.append(song)
+            self._song_list.append(song)
 
             # If there is more than 50 videos in playlist
             while next_page_token != '':
@@ -150,8 +152,8 @@ class YoutubeApi:
                 for item in tqdm(playlist_items_next['items']):
                     video_id = item['snippet']['resourceId']['videoId']
                     song = item['snippet']['title'] + " --- " + video_id
-                    self.song_list.append(song)
-        return self.song_list
+                    self._song_list.append(song)
+        return self._song_list
 
 
     def get_liked_videos(self):
@@ -164,3 +166,16 @@ class YoutubeApi:
         return resp
 
 
+    ## Setter and Getters
+
+    def get_song_list(self):
+        return self._song_list
+
+    def set_song_list(self, song_list):
+        self._song_list = song_list
+
+    def get_playlist_dictionary(self):
+        return self._playlist_dictionary
+
+    def set_playlist_dictionary(self, playlist_dictionary):
+        self._playlist_dictionary = playlist_dictionary

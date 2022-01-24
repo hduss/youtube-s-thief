@@ -18,6 +18,7 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 from youtubeList.inc.YoutubeApi import YoutubeApi
+from youtubeList.inc.Tools import Tools
 
 # Colorama init and variables
 colorama.init()
@@ -135,14 +136,6 @@ def get_video_next_page(build, next_page_token):
     )
     resp = request.execute()
     return resp
-
-
-# registered song name and yoputube id in file (/uploads)
-def write_in_folder(file, song_list):
-    txt_file = file.split('/')[-1]
-    with open(file, 'w', encoding='utf-8') as f:
-        for song in tqdm(song_list, desc=f'Writing song in {txt_file}'):
-            f.write(song + "\n")
 
 
 
@@ -327,40 +320,18 @@ def main():
     # Display playlists from youtube account
     if args.list:
 
-        # get credentials from youtube
-        build = authenticate_youtube()
-        playlist_dictionary = {}
-        playlists = get_playlists(build)
-        print(f'Search existing result : {search_existing_registered_playlist("Liked videos")}')
+        yt_api = YoutubeApi()
+        playlists = yt_api.get_playlists()
+        playlist_dict = yt_api.create_playlists_dict(playlists)
 
-        # Add liked videos in dictionary at 1st key
-        playlist_dictionary[1] = {
-            'title': 'Liked videos',
-            'id': 'LL',
-            'registered': search_existing_registered_playlist('Liked videos'),
-            'count_playlist': get_liked_videos(build)['pageInfo']['totalResults'],
-            'count_registered_file':
-                (count_registered_song('Liked videos') if search_existing_registered_playlist('Liked videos') else 0)
-        }
-
-        for ids, items in enumerate(playlists['items'], start=2):
-            playlist_title = items['snippet']['localized']['title']
-
-            playlist_dictionary[ids] = {
-                'title': playlist_title,
-                'id': items['id'],
-                'registered': search_existing_registered_playlist(playlist_title),
-                'count_playlist': items['contentDetails']['itemCount'],
-                'count_registered_file':
-                    (count_registered_song(playlist_title) if search_existing_registered_playlist(playlist_title) else 0)
-            }
-
+        # print(f'Playlist_dict: {playlist_dict}')
+        # print(f'Search existing result : {search_existing_registered_playlist("Liked videos")}')
         # print(json.dumps(playlist_dico_2, indent=2))
-        while True:
 
+        while True:
             print('List of playlists found from your account :\n')
 
-            for key, value in playlist_dictionary.items():
+            for key, value in playlist_dict.items():
                 print(display_output_playlist(key, value))
 
             consent = input(f'\n{colorama_yellow}Do you want download a playlist locally ? (Y/N){colorama_end} : ')
@@ -369,49 +340,30 @@ def main():
                 playlist_id = input(f'{colorama_yellow}Choose playlist by ID : {colorama_end}')
 
                 # @todo : add verification for string input
-                if 1 <= int(playlist_id) <= len(playlist_dictionary):
+                if 1 <= int(playlist_id) <= len(playlist_dict):
 
-                    print(colorama_plus, 'Playlist choose : ', playlist_dictionary[int(playlist_id)]['title'])
-                    playlist_items = get_playlists_items(build, playlist_dictionary[int(playlist_id)]['id'])
-                    try:
-                        next_page_token = playlist_items['nextPageToken']
-                    except:
-                        next_page_token = ''
+                    print(colorama_plus, 'Playlist choose : ', playlist_dict[int(playlist_id)]['title'])
+                    # print(json.dumps(yt_api.get_all_items(int(playlist_id)), indent=2))
+                    # print(f'Song list from object: {yt_api.get_song_list()}')
 
-                    for item in playlist_items['items']:
-                        video_id = item['snippet']['resourceId']['videoId']
-                        song = item['snippet']['title'] + " --- " + video_id
-                        song_list.append(song)
+                    # Set all song in yt_api._song_list
+                    yt_api.get_all_items(int(playlist_id))
+                    # Write all song in txt file
+                    Tools.write_in_folder(f"uploads/{playlist_dict[int(playlist_id)]['title']}.txt",
+                                          yt_api.get_song_list())
 
-                    # If there is more than 50 videos in playlist
-                    while next_page_token != '':
+                    # MAJ datas for next loop
+                    playlist_dict[int(playlist_id)]['count_registered_file'] = count_registered_song(
+                        playlist_dict[int(playlist_id)]['title'])
+                    if search_existing_registered_playlist(playlist_dict[int(playlist_id)]['title']):
+                        playlist_dict[int(playlist_id)]['registered'] = True
 
-                        playlist_items_next = get_playlist_items_next(build, playlist_dictionary[int(playlist_id)][
-                            'id'], next_page_token)
-
-                        try:
-                            next_page_token = playlist_items_next['nextPageToken']
-                        except:
-                            next_page_token = ''
-
-                        # print('next page token => ', next_page_token)
-                        for item in tqdm(playlist_items_next['items']):
-                            video_id = item['snippet']['resourceId']['videoId']
-                            song = item['snippet']['title'] + " --- " + video_id
-                            song_list.append(song)
-
-                    write_in_folder(f"uploads/{playlist_dictionary[int(playlist_id)]['title']}.txt", song_list)
-
-                    # CLear and MAJ datas for while loop after registered a playlist
-                    song_list.clear()
-                    playlist_dictionary[int(playlist_id)]['count_registered_file'] = count_registered_song(playlist_dictionary[int(playlist_id)]['title'])
-                    if search_existing_registered_playlist(playlist_dictionary[int(playlist_id)]['title']):
-                        playlist_dictionary[int(playlist_id)]['registered'] = True
+                    yt_api.set_song_list([])
+                    yt_api.set_playlist_dictionary(playlist_dict)
 
                 else:
                     print(colorama_less + colorama.Fore.RED + ' Error : Value ' + playlist_id + ' is not valid' +
                           colorama_end + '\n')
-
             else:
                 print('End of program ...')
                 break
@@ -572,55 +524,7 @@ def main():
 
         # print(liked_playlist)
 
-        yt_api = YoutubeApi()
-        # build = yt_api.authenticate_youtube()
-        playlists = yt_api.get_playlists()
-        # print(f'PLaylists => {playlists}')
-        playlist_dict = yt_api.create_playlists_dict(playlists)
-        print(f'Playlist_dict: {playlist_dict}')
-        print(f'Search existing result : {search_existing_registered_playlist("Liked videos")}')
 
-        # print(json.dumps(playlist_dico_2, indent=2))
-        while True:
-
-            print('List of playlists found from your account :\n')
-
-            for key, value in playlist_dict.items():
-                print(display_output_playlist(key, value))
-
-
-            consent = input(f'\n{colorama_yellow}Do you want download a playlist locally ? (Y/N){colorama_end} : ')
-            if consent == 'Y' or consent == 'y':
-
-                playlist_id = input(f'{colorama_yellow}Choose playlist by ID : {colorama_end}')
-
-                # @todo : add verification for string input
-                if 1 <= int(playlist_id) <= len(playlist_dict):
-
-                    # print(f'Song list => {yt_api.get_all_items(int(playlist_id))}')
-                    # breakpoint()
-
-                    print(colorama_plus, 'Playlist choose : ', playlist_dict[int(playlist_id)]['title'])
-                    print(json.dumps(yt_api.get_all_items(int(playlist_id)), indent=2))
-                    print(f'Song list from object: {yt_api.song_list}')
-
-                    # breakpoint()
-                    # write_in_folder(f"uploads/{playlist_dictionary[int(playlist_id)]['title']}.txt", song_list)
-
-                    # CLear and MAJ datas for while loop after registered a playlist
-                    # song_list.clear()
-                    # playlist_dictionary[int(playlist_id)]['count_registered_file'] = count_registered_song(
-                    #     playlist_dictionary[int(playlist_id)]['title'])
-                    # if search_existing_registered_playlist(playlist_dictionary[int(playlist_id)]['title']):
-                    #     playlist_dictionary[int(playlist_id)]['registered'] = True
-
-                else:
-                    print(colorama_less + colorama.Fore.RED + ' Error : Value ' + playlist_id + ' is not valid' +
-                          colorama_end + '\n')
-
-            else:
-                print('End of program ...')
-                break
 
     else:
         print('No argument')
