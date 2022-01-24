@@ -1,7 +1,5 @@
 import os
 import pickle
-from typing import Any
-
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -11,15 +9,9 @@ from youtubeList.inc.Tools import Tools
 class YoutubeApi:
 
     liked_videos = 'Liked videos'
-    # playlist_dictionary = {}
-    # song_list = []
-
-
-    # tools = Tools()
 
     # Init call authenticate_youtube to log user directly
     def __init__(self):
-        print('Je suis __init__')
         self.build = self.authenticate_youtube()
         self.Tools = Tools()
         self._song_list = []
@@ -126,8 +118,6 @@ class YoutubeApi:
         playlist_yt_id = self._playlist_dictionary[int(playlist_id)]['id']
         playlists_items_first = self.get_playlists_items(playlist_yt_id)
 
-        print(f'playlist_yt_id: {playlist_yt_id}')
-
         try:
             next_page_token = playlists_items_first['nextPageToken']
         except:
@@ -138,7 +128,7 @@ class YoutubeApi:
             song = item['snippet']['title'] + " --- " + video_id
             self._song_list.append(song)
 
-            # If there is more than 50 videos in playlist
+            # If there is more than 50 videos in the playlist
             while next_page_token != '':
 
                 playlist_items_next = self.get_playlist_items_next(playlist_yt_id, next_page_token)
@@ -148,7 +138,6 @@ class YoutubeApi:
                 except:
                     next_page_token = ''
 
-                # print('next page token => ', next_page_token)
                 for item in tqdm(playlist_items_next['items']):
                     video_id = item['snippet']['resourceId']['videoId']
                     song = item['snippet']['title'] + " --- " + video_id

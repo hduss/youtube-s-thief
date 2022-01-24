@@ -1,5 +1,4 @@
 import os
-
 from tqdm import tqdm
 
 class Tools:
@@ -9,7 +8,8 @@ class Tools:
 
 
     #Search if the playlist already exist in uploads folder
-    def search_existing_registered_playlist(self, playlist_name):
+    @staticmethod
+    def search_existing_registered_playlist(playlist_name):
         return os.path.isfile('uploads/' + playlist_name + '.txt')
 
 

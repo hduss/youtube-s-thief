@@ -1,22 +1,11 @@
-# API client library
 import youtubeList.title as title
 import youtubeList.settings as settings
-import youtubeList.YoutubeApi as tesApi
 import os
-import pickle
-import requests
-import json
 import colorama
 import argparse
 import youtube_dl
-import google.oauth2.credentials
 import pytube.exceptions
 from pytube import Playlist, YouTube
-from tqdm import tqdm
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
-
 from youtubeList.inc.YoutubeApi import YoutubeApi
 from youtubeList.inc.Tools import Tools
 
@@ -39,9 +28,9 @@ parser.add_argument('-l', '--list', help='Show all your youtube playlists to sav
                     action='store_true')
 parser.add_argument('-r', '--registered', help='List your locally saved playlists to then download the videos',
                     action="store_true")
-parser.add_argument('-t', '--test', help='Show all your youtube playlists to save them',
+parser.add_argument('-t', '--test', help='Argument available for tests',
                     action='store_true')
-parser.add_argument('-t2', '--test2', help='Show all your youtube playlists to save them',
+parser.add_argument('-t2', '--test2', help='Second argument available for tests',
                     action='store_true')
 parser.add_argument('-d', '--download', help='Download a playlist/video from his ID or from url',
                     nargs='?', const="download_playlist")
@@ -50,104 +39,14 @@ args = parser.parse_args()
 print(f'Arguments list : {args}')
 
 
-
-
-# Return build of API if authenticate OK
-# Create or refresh credentials
-def authenticate_youtube():
-    api_service_name = "youtube"
-    api_version = "v3"
-    credentials = None
-    if os.path.exists("credentials/token.pickle"):
-        with open("credentials/token.pickle", "rb") as token:
-            credentials = pickle.load(token)
-
-    # if there are no (valid) credentials available, let the user log in.
-    if not credentials or not credentials.valid:
-        if credentials and credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials/client_secrets.json',
-                scopes=['https://www.googleapis.com/auth/youtube.readonly']
-            )
-            flow.run_local_server()
-            credentials = flow.credentials
-        # save the credentials for the next run
-        with open("credentials/token.pickle", "wb") as token:
-            pickle.dump(credentials, token)
-
-    youtube = build(api_service_name, api_version, credentials=credentials)
-    return youtube
-
-
-# Get playlists from youtube account
-def get_playlists(build):
-    request = build.playlists().list(
-        part="snippet, contentDetails",
-        mine="true",
-        maxResults=50,
-    )
-    resp = request.execute()  # Query execution
-    return resp
-
-
-# Get all videos from a playlist by id's playlist
-def get_playlists_items(build, playlist_id):
-    request = build.playlistItems().list(
-        part='contentDetails, snippet',
-        playlistId=playlist_id,
-        maxResults=50
-    )
-    resp = request.execute()  # Query execution
-    return resp
-
-
-# Get next videos from playlist if more than 50 videos
-def get_playlist_items_next(build, playlist_id, next_page_token):
-    request = build.playlistItems().list(
-        part='contentDetails, snippet',
-        playlistId=playlist_id,
-        maxResults=50,
-        pageToken=next_page_token
-    )
-    resp = request.execute()  # Query execution
-    return resp
-
-
-# Get videos from liked videos playlist
-def get_liked_videos(build):
-    request = build.videos().list(
-        part='contentDetails, snippet',
-        myRating='like',
-        maxResults=50
-    )
-    resp = request.execute()  # Query execution
-    return resp
-
-
-# get next page from youtube-api (if there is more than 50 videos per playlist)
-def get_video_next_page(build, next_page_token):
-    request = build.videos().list(
-        part='contentDetails, snippet',
-        myRating='like',
-        maxResults=50,
-        pageToken=next_page_token
-    )
-    resp = request.execute()
-    return resp
-
-
-
+# Download a playlist from txt file with youtube-dl
 def download_playlist_youtube_dl(filename, file_format):
     print(f'Filename => {filename}')
     print(f'Filename => {file_format}')
+
     with open('uploads/' + filename, encoding="utf8") as lines:
-
-
         for line in lines:
             print(line)
-
             split_line = line.split('---')
             # Exemple => don't become dont in download pytube
             video_name = split_line[0].strip().replace('\'', '').replace('.', '')
@@ -181,21 +80,13 @@ def download_playlist_youtube_dl(filename, file_format):
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
 
-            # with ydl:
-            #     result = ydl.extract_info(
-            #         url,
-            #         download=True  # We just want to extract the info
-            #     )
 
-
-
-# Downloading a playlist from .txt file
+# Downloading a playlist from .txt file with pytube
 def download_playlist(filename, file_format):
     print(f'Filename => {filename}')
     print(f'Filename => {file_format}')
 
     with open('uploads/' + filename, encoding="utf8") as lines:
-
 
         folder_name = filename.split('.txt')[0]
         counter_corrupt_videos = 0
@@ -219,7 +110,7 @@ def download_playlist(filename, file_format):
                 stream = yt.streams.filter(only_audio=True).first()  # Test for age restricted
             except:
                 corrupted_videos.append(f'{video_name} --- {video_id}')
-                write_in_folder(f'{download_folder}/corrupted_videos.txt', corrupted_videos)
+                Tools.write_in_folder(f'{download_folder}/corrupted_videos.txt', corrupted_videos)
                 counter_corrupt_videos += 1
 
             else:
@@ -309,28 +200,19 @@ def display_output_playlist(key, value):
 
 # Main function
 def main():
-    nbr_pages = 0
-    song_list = []
     title.start_program()
-
-    # yt_api = testApi()
-    # print(yt_api)
-    # print(yt_api.authenticate_youtube())
 
     # Display playlists from youtube account
     if args.list:
 
+        # Auth API and get playlists
         yt_api = YoutubeApi()
         playlists = yt_api.get_playlists()
         playlist_dict = yt_api.create_playlists_dict(playlists)
 
-        # print(f'Playlist_dict: {playlist_dict}')
-        # print(f'Search existing result : {search_existing_registered_playlist("Liked videos")}')
-        # print(json.dumps(playlist_dico_2, indent=2))
-
         while True:
-            print('List of playlists found from your account :\n')
 
+            print('List of playlists found from your account :\n')
             for key, value in playlist_dict.items():
                 print(display_output_playlist(key, value))
 
@@ -341,11 +223,7 @@ def main():
 
                 # @todo : add verification for string input
                 if 1 <= int(playlist_id) <= len(playlist_dict):
-
                     print(colorama_plus, 'Playlist choose : ', playlist_dict[int(playlist_id)]['title'])
-                    # print(json.dumps(yt_api.get_all_items(int(playlist_id)), indent=2))
-                    # print(f'Song list from object: {yt_api.get_song_list()}')
-
                     # Set all song in yt_api._song_list
                     yt_api.get_all_items(int(playlist_id))
                     # Write all song in txt file
@@ -355,7 +233,7 @@ def main():
                     # MAJ datas for next loop
                     playlist_dict[int(playlist_id)]['count_registered_file'] = count_registered_song(
                         playlist_dict[int(playlist_id)]['title'])
-                    if search_existing_registered_playlist(playlist_dict[int(playlist_id)]['title']):
+                    if Tools.search_existing_registered_playlist(playlist_dict[int(playlist_id)]['title']):
                         playlist_dict[int(playlist_id)]['registered'] = True
 
                     yt_api.set_song_list([])
@@ -368,10 +246,6 @@ def main():
                 print('End of program ...')
                 break
 
-    # Verify if a playlist is already registered locally (/uploads)
-    elif args.registered:
-
-        print(os.listdir("uploads"))
 
     # Download directly from an ID or url
     elif args.download:
@@ -429,6 +303,45 @@ def main():
     # Cut long videos
     elif args.cut:
         print(args.cut)
+
+
+    # Verify if a playlist is already registered locally (/uploads)
+    elif args.registered:
+        print(os.listdir("uploads"))
+
+
+    # Testing
+    elif args.test:
+        print(args.test)
+        # ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+        #
+        # with ydl:
+        #     result = ydl.extract_info(
+        #         'https://www.youtube.com/watch?v=RLJnsU5VlAY&ab_channel=2nOfficiel',
+        #         download=True  # We just want to extract the info
+        #     )
+        #
+        # if 'entries' in result:
+        #     # Can be a playlist or a list of videos
+        #     video = result['entries'][0]
+        # else:
+        #     # Just a video
+        #     video = result
+        #
+        # print(video)
+        # video_url = video['url']
+        # print(video_url)
+
+        # file = 'uploads/Liked videos.txt'
+        # print(count_registered_song(file))
+        #
+        # build = authenticate_youtube()
+        # playlists = get_playlists(build)
+        # print(json.dumps(playlists, indent=2))
+        # count_liked_playlist = get_liked_videos(build)['pageInfo']['totalResults']
+        # print(json.dumps(liked_playlist['snippet'], indent=2))
+
+        # print(liked_playlist)
 
     elif args.test2:
         url = 'https://www.youtube.com/watch?v=uFnlCzgThS8&ab_channel=ValdSullyvan'
@@ -490,44 +403,8 @@ def main():
         #     print('probleme')
 
 
-
-    # Traduce a song
-    elif args.test:
-        print(args.test)
-        # ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
-        #
-        # with ydl:
-        #     result = ydl.extract_info(
-        #         'https://www.youtube.com/watch?v=RLJnsU5VlAY&ab_channel=2nOfficiel',
-        #         download=True  # We just want to extract the info
-        #     )
-        #
-        # if 'entries' in result:
-        #     # Can be a playlist or a list of videos
-        #     video = result['entries'][0]
-        # else:
-        #     # Just a video
-        #     video = result
-        #
-        # print(video)
-        # video_url = video['url']
-        # print(video_url)
-
-        # file = 'uploads/Liked videos.txt'
-        # print(count_registered_song(file))
-        #
-        # build = authenticate_youtube()
-        # playlists = get_playlists(build)
-        # print(json.dumps(playlists, indent=2))
-        # count_liked_playlist = get_liked_videos(build)['pageInfo']['totalResults']
-        # print(json.dumps(liked_playlist['snippet'], indent=2))
-
-        # print(liked_playlist)
-
-
-
     else:
-        print('No argument')
+        print('No argument given')
 
 
 if __name__ == "__main__":
