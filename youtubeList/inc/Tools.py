@@ -4,7 +4,7 @@ from tqdm import tqdm
 class Tools:
 
     def __init__(self):
-        print('__init__ Tools')
+        print('__init__ Tools\n')
 
 
     #Search if the playlist already exist in uploads folder
