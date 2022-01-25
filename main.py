@@ -139,66 +139,6 @@ def download_playlist(filename, file_format):
         print('Corrupted videos => ', corrupted_videos)
 
 
-# Counts the number of lines of the recorded file compared to the number of songs in the Youtube playlist
-# Set complet path
-def count_registered_song(file_path):
-    counter = 0
-    if search_existing_registered_playlist(file_path):
-        with open(f'uploads/{file_path}.txt', 'r', encoding="utf8") as lines:
-            for line in lines:
-                counter += 1
-        # print(f"This is the number of lines in the file : {counter}")
-        return counter
-
-    return False
-
-
-# Count number of video in a playlist on Youtube account
-def count_number_of_videos(playlist):
-    print('count_number_of_videos function')
-
-
-# Search if playlist is already registered in uploads folder
-def search_existing_registered_playlist(playlist_name):
-    return os.path.isfile('uploads/' + playlist_name + '.txt')
-
-
-# Exclude hidden files for search in folders
-def exclude_hidden_files():
-    print('hidden files')
-
-
-def compare_nbr_items_playlists():
-    print('compare')
-
-
-def display_output_playlist(key, value):
-
-    output_string = f'{colorama_less} ' \
-                    f'{key} - {value["title"]} ' \
-                    f': {colorama_red}Playlist not registered locally ({value["count_registered_file"]}' \
-                    f'/{value["count_playlist"]})' \
-                    f' {colorama_end}'
-
-    if value['registered']:
-        if value['count_playlist'] == value['count_registered_file']:
-
-            output_string = f'{colorama_plus} ' \
-                     f'{key} - {value["title"]} ' \
-                     f': {colorama_green}Playlist registered locally ({value["count_registered_file"]}' \
-                     f'/{value["count_playlist"]})' \
-                     f' {colorama_end}'
-        elif value['count_playlist'] != value['count_registered_file']:
-
-            output_string = f'{colorama_warning} ' \
-                     f'{key} - {value["title"]} ' \
-                     f': {colorama_yellow}Playlist registered locally ({value["count_registered_file"]}' \
-                     f'/{value["count_playlist"]})' \
-                     f' {colorama_end}'
-
-    return output_string
-
-
 # Main function
 def main():
     title.start_program()
@@ -215,7 +155,7 @@ def main():
 
             print('List of playlists found from your account :\n')
             for key, value in playlist_dict.items():
-                print(display_output_playlist(key, value))
+                print(Tools.display_output_playlist(key, value))
 
             consent = input(f'\n{colorama_yellow}Do you want registered a playlist locally ? (Y/N){colorama_end} : ')
             if consent == 'Y' or consent == 'y':
@@ -232,7 +172,7 @@ def main():
                                           yt_api.get_song_list())
 
                     # MAJ datas for next loop
-                    playlist_dict[int(playlist_id)]['count_registered_file'] = count_registered_song(
+                    playlist_dict[int(playlist_id)]['count_registered_file'] = Tools.count_registered_song(
                         playlist_dict[int(playlist_id)]['title'])
                     if Tools.search_existing_registered_playlist(playlist_dict[int(playlist_id)]['title']):
                         playlist_dict[int(playlist_id)]['registered'] = True
@@ -251,11 +191,9 @@ def main():
     # Download directly from an ID or url
     elif args.download:
 
-
         if args.download != 'download_playlist':
             print('URL is required here')
-            # r = requests.get(args.download)
-            # print(r)
+
         else:
             files = os.listdir("uploads")
             files_new = {}
@@ -313,57 +251,20 @@ def main():
 
     # Testing
     elif args.test:
+
         print(args.test)
-        # ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
-        #
-        # with ydl:
-        #     result = ydl.extract_info(
-        #         'https://www.youtube.com/watch?v=RLJnsU5VlAY&ab_channel=2nOfficiel',
-        #         download=True  # We just want to extract the info
-        #     )
-        #
-        # if 'entries' in result:
-        #     # Can be a playlist or a list of videos
-        #     video = result['entries'][0]
-        # else:
-        #     # Just a video
-        #     video = result
-        #
-        # print(video)
-        # video_url = video['url']
-        # print(video_url)
-
-        # file = 'uploads/Liked videos.txt'
-        # print(count_registered_song(file))
-        #
-        # build = authenticate_youtube()
-        # playlists = get_playlists(build)
-        # print(json.dumps(playlists, indent=2))
-        # count_liked_playlist = get_liked_videos(build)['pageInfo']['totalResults']
-        # print(json.dumps(liked_playlist['snippet'], indent=2))
-
-        # print(liked_playlist)
-
-
         downloader = Downloader(args.test)
         downloader.download_playlist()
         print(f'Downloader object => {downloader}')
 
 
-
-
-
-
-
     elif args.test2:
+        print('je suis args test 2')
         url = 'https://www.youtube.com/watch?v=uFnlCzgThS8&ab_channel=ValdSullyvan'
         url2 = 'https://www.youtube.com/watch?v=bxWaWiaQz6w&ab_channel=Yotozz'
         url3 = 'https://www.youtube.com/watch?v=tO4dxvguQDk'
-        url4 = 'https://www.youtube.com/watch?v=HqJ1qP05Si0&ab_channel=Ninho'
-        print('je suis args test 2')
 
         yt = YouTube(url)
-        print(yt.title)
         try:
             streams = yt.streams()
         except pytube.exceptions.AgeRestrictedError as restricted:
@@ -373,47 +274,12 @@ def main():
             print('unavailable')
         except pytube.exceptions.RegexMatchError:
             print('regex')
-
-
         except pytube.exceptions.VideoPrivate:
             print('private video')
         except pytube.exceptions.VideoUnavailable:
             print('test3333')
         else:
             print('je passe ici')
-
-        # yt = YouTube(url2)
-        # print(yt.title)
-        # print(yt.streams())
-
-
-        # try:
-        #
-        #     yt = YouTube(url1)
-        #     # print(yt)
-        #     # Get video by mime_type
-        #     # available = yt.check_availability()
-        #     # print(available)
-        #     # stream = yt.streams.filter(only_audio=True).first()
-        #
-        #     # print(available_video)
-        # except:
-        #     print('je suis except')
-        # else:
-        #     print('ici')
-
-        # print(f'Bypasse age {yt.bypass_age_gate()}')
-        # yt.check_availability()  # test availability on url
-        #
-        # print(json.dumps(yt.streams))
-        # stream = yt.streams.filter(only_audio=True).first()
-        # # download the file
-        # try:
-        #     print('je suis try')
-        #     # out_file = stream.download(output_path='downloads/' + folder_name)
-        # except:
-        #     print('probleme')
-
 
     else:
         print('No argument given')
