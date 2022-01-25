@@ -34,12 +34,13 @@ Allows you to upload audio from youtube videos and playlists,
 
 
     (IN PROGRESS)
-    Once the playlist is saved, you can download it from the command: 
-    => python main.py --download to download playlistys registred locally : 
+
+    Once the playlist is saved, you can download it from the command
+    => 'python main.py --download' to download playlists registred locally : 
 
 ![list of youtube account playlists](public/img/playlist_download.png)
 
-    Each video will be downloaded in downloads/ folder
+    Each video will be downloaded in downloads/[playlist_name]/[format] folder
 
     => python main.py --download https://youtube.com?list=zergvrezgreh to download playlist
     OR unique video :
